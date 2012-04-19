@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Meshball</string>
+    <string name="common_version">Version %s</string>
+
+    <string name="profile_screenname">Screen Name:</string>
+    <string name="profile_screenname_hint">Your screen name...</string>
+    <string name="profile_picture">Your picture:</string>
+    <string name="profile_change_picture">(touch to change)</string>
+
+    <string name="menu_players">Players</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_settings">Settings</string>
+
+    <string name="preferences_general">Meshball Settings</string>
+
+    <string name="preferences_audio">Enable audio</string>
+    <string name="preferences_audio_summary">Turn on or off audio.</string>
+    <string name="preferences_audio_message">Enable to turn on audio effects.</string>
+    <string name="preferences_handedness">Handedness: %s</string>
+    <string name="preferences_handedness_title">Handedness</string>
+    <string name="preferences_handedness_summary">Select the handedness of the fire button</string>
+
+    <string name="okay">Okay</string>
+    <string name="cancel">Cancel</string>
+    <string name="update">Update</string>
+    <string name="settings">Settings</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="warning">Warning</string>
+    <string name="error">Error</string>
+    <string name="how_to">How To</string>
+    <string name="use">Use</string>
+    <string name="pick">Pick</string>
+    <string name="take">Take</string>
+
+    <string name="title_profile_picture">Your Profile Picture</string>
+
+    <string name="toast_failed_to_delete_tmp_file">Failed to delete temporary file.</string>
+
+    <string name="msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>
+
+    <string name="dlg_displayname_title">Missing Name</string>
+    <string name="dlg_displayname_text">Sorry, but you need to have some name or way of identifying yourself.</string>
+
+    <string name="dlg_no_camera_title">No Camera Available</string>
+    <string name="dlg_no_camera_text">Sorry, but your device does not have a camera.</string>
+
+    <string name="dlg_firsttime_title">First Time</string>
+    <string name="dlg_firsttime_text">This is the first time you are using Meshball. Please setup your profile.\n\nNothing complicated, just a name and picture to display to identify you when you are in the game.</string>
+
+    <string name="crop_option_error_message">No available crop option.</string>
+    <string name="crop_option_choose_title">Choose Crop Option</string>
+    <string name="crop_option_no_result_message">Sorry, but was unable to process image. Please pick another.</string>
+
+
+</resources>

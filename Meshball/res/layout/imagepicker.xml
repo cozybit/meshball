@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) 2011, Wobblesoft LLC. All rights reserved.
+  -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/solid_white" >
+
+    <TextView
+        android:id="@+id/ip_your_picture_label"
+        style="@style/ShadowedTextSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:text="@string/title_profile_picture"
+        android:textSize="18sp" >
+    </TextView>
+
+    <FrameLayout
+        android:id="@+id/ip_image_frame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ip_your_picture_label"
+        android:layout_centerHorizontal="true" >
+
+        <ImageView
+            android:id="@+id/ip_profile_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_margin="20dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/bordered_drawable"
+            android:maxHeight="150dp"
+            android:maxWidth="150dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/missing_profile" />
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/ip_take_picture_button"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="@string/take"
+        android:layout_below="@id/ip_image_frame"
+        android:onClick="onTakePicture"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/ip_pick_picture_button"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="@string/pick"
+        android:layout_below="@id/ip_take_picture_button"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:onClick="onPickImage"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/ip_use_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_margin="10dp"
+        android:onClick="onUse"
+        android:text="@string/use" />
+
+    <Button
+        android:id="@+id/ip_cancel_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="10dp"
+        android:onClick="onCancel"
+        android:text="@string/cancel" />
+
+</RelativeLayout>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <color name="solid_white">#ffffff</color>
+    <color name="pale_white">#77ffffff</color>
+    <color name="dark_grey">#303030</color>
+    <color name="medium_grey">#717a89</color>
+    <color name="light_grey">#F2F2F2</color>
+    <color name="disabled_color">#cccccc</color>
+    <color name="header_bg_color">#939aa5</color>
+    <color name="solid_black">#000000</color>
+    <color name="warning_color">#F5B800</color>
+    <color name="navy_color">#A9D0F5</color>
+    <color name="pulse_border">#99C0E5</color>
+
+    <color name="radar_circle">#995EA6E6</color>
+    <color name="radar_circle_border">#DD358FDE</color>
+    <color name="menu_selected">#D68B16</color>
+
+    <color name="transparent_color">#00000000</color>
+
+
+    <color name="shadow_color">#aa000000</color>
+
+    <color name="faced_control_text">#ffffff</color>
+    <color name="balloon_text">#ff0000</color>
+
+    <color name="blue_text">#2222ff</color>
+    <color name="blue_button_text">#325085</color>
+
+    <color name="map_messages_background">#880000ff</color>
+
+    <color name="possible_result_points">#c0ffff00</color>
+    <color name="result_image_border">#ffffffff</color>
+    <color name="result_minor_text">#ffc0c0c0</color>
+    <color name="result_points">#c000ff00</color>
+    <color name="result_text">#ffffffff</color>
+    <color name="result_view">#b0000000</color>
+    <color name="viewfinder_frame">#ff000000</color>
+    <color name="viewfinder_laser">#ffff0000</color>
+    <color name="viewfinder_mask">#60000000</color>
+    <color name="contents_text">#ff000000</color>
+    <color name="encode_view">#ffffffff</color>
+    <color name="status_text">#ffffffff</color>
+
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/preferences_general" />
+
+    <CheckBoxPreference
+            android:key="meshball.audio"
+            android:title="@string/preferences_audio"
+            android:summary="@string/preferences_audio_summary"
+            android:persistent="true"
+            android:defaultValue="true"/>
+
+    <ListPreference
+            android:title="@string/preferences_handedness_title"
+            android:summary="@string/preferences_handedness_summary"
+            android:key="meshball.handedness"
+            android:defaultValue="Yelp"
+            android:entries="@array/handedness_items"
+            android:entryValues="@array/handedness_values" />
+
+</PreferenceScreen>

@@ -1,0 +1,15 @@
+<resources>
+
+    <item type="id" name="menu_home"/>
+    <item type="id" name="menu_players" />
+    <item type="id" name="menu_share" />
+    <item type="id" name="menu_profile" />
+    <item type="id" name="menu_settings" />
+    <item type="id" name="menu_refresh" />
+
+    <item type="id" name="auto_focus"/>
+    <item type="id" name="quit"/>
+    <item type="id" name="restart_preview"/>
+    <item type="id" name="return_scan_result"/>
+
+</resources>

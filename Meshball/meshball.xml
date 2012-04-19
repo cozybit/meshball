@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="meshball" default="all">
+  
+  
+  <property file="meshball.properties"/>
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!-- 
+  <property name="skip.tests" value="true"/>
+   -->
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="128m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/.pyc/**"/>
+    <exclude name="**/.pyo/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/.git/**"/>
+    <exclude name="**/*.hprof/**"/>
+    <exclude name="**/_svn/**"/>
+    <exclude name="**/.hg/**"/>
+    <exclude name="**/*.lib/**"/>
+    <exclude name="**/*~/**"/>
+    <exclude name="**/__pycache__/**"/>
+    <exclude name="**/.bundle/**"/>
+    <exclude name="**/*.rbc/**"/>
+    <exclude name="**/*.o/**"/>
+    <exclude name="**/*.obj/**"/>
+  </patternset>
+  <patternset id="compiler.excluded">
+    <exclude name="${basedir}/gen/**"/>
+    <exclude name="${basedir}/../ActionBarSherlock/gen/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.war"/>
+    <include name="*.ear"/>
+    <include name="*.apk"/>
+    <include name="*.zip"/>
+    <include name="*.swc"/>
+    <include name="*.egg"/>
+    <include name="*.jar"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <include name="**/?*.properties"/>
+    <include name="**/?*.xml"/>
+    <include name="**/?*.gif"/>
+    <include name="**/?*.png"/>
+    <include name="**/?*.jpeg"/>
+    <include name="**/?*.jpg"/>
+    <include name="**/?*.html"/>
+    <include name="**/?*.dtd"/>
+    <include name="**/?*.tld"/>
+    <include name="**/?*.ftl"/>
+  </patternset>
+  
+  <!-- JDK definitions -->
+  
+  <property name="jdk.bin.android_4.0.3_google_apis" value="${jdk.home.android_4.0.3_google_apis}/../../../System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home/bin"/>
+  <path id="jdk.classpath.android_4.0.3_google_apis">
+    <fileset dir="${jdk.home.android_4.0.3_google_apis}">
+      <include name="platforms/android-15/android.jar"/>
+      <include name="add-ons/addon-google_apis-google_inc_-15/libs/effects.jar"/>
+      <include name="add-ons/addon-google_apis-google_inc_-15/libs/usb.jar"/>
+      <include name="add-ons/addon-google_apis-google_inc_-15/libs/maps.jar"/>
+      <include name="platforms/android-15/data/res"/>
+      <include name="tools/support/annotations.jar"/>
+    </fileset>
+  </path>
+  
+  <property name="project.jdk.home" value="${jdk.home.1.6}"/>
+  <property name="project.jdk.bin" value="${jdk.bin.1.6}"/>
+  <property name="project.jdk.classpath" value="jdk.classpath.1.6"/>
+  
+  
+  <!-- Project Libraries -->
+  
+  <path id="library.android-support-v4.classpath">
+    <pathelement location="${basedir}/../ActionBarSherlock/libs/android-support-v4.jar"/>
+  </path>
+  
+  
+  <!-- Global Libraries -->
+  
+  
+  <!-- Application Server Libraries -->
+  <!-- Register Custom Compiler Taskdefs -->
+  <property name="javac2.home" value="${idea.home}/lib"/>
+  <path id="javac2.classpath">
+    <pathelement location="${javac2.home}/javac2.jar"/>
+    <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/asm.jar"/>
+    <pathelement location="${javac2.home}/asm-commons.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
+  </path>
+  <target name="register.custom.compilers">
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+    <taskdef name="instrumentIdeaExtensions" classname="com.intellij.ant.InstrumentIdeaExtensions" classpathref="javac2.classpath"/>
+  </target>
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module ActionBarSherlock -->
+  
+  <dirname property="module.actionbarsherlock.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.actionbarsherlock" value="${jdk.home.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.bin.actionbarsherlock" value="${jdk.bin.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.classpath.actionbarsherlock" value="jdk.classpath.android_4.0.3_google_apis"/>
+  
+  <property name="compiler.args.actionbarsherlock" value="${compiler.args}"/>
+  
+  <property name="actionbarsherlock.output.dir" value="${module.actionbarsherlock.basedir}/out/production/ActionBarSherlock"/>
+  <property name="actionbarsherlock.testoutput.dir" value="${module.actionbarsherlock.basedir}/out/test/ActionBarSherlock"/>
+  
+  <path id="actionbarsherlock.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="actionbarsherlock.module.production.classpath">
+    <path refid="${module.jdk.classpath.actionbarsherlock}"/>
+    <pathelement location="${basedir}/../ActionBarSherlock/libs/android-support-v4.jar"/>
+  </path>
+  
+  <path id="actionbarsherlock.runtime.production.module.classpath">
+    <pathelement location="${actionbarsherlock.output.dir}"/>
+    <pathelement location="${basedir}/../ActionBarSherlock/libs/android-support-v4.jar"/>
+  </path>
+  
+  <path id="actionbarsherlock.module.classpath">
+    <path refid="${module.jdk.classpath.actionbarsherlock}"/>
+    <pathelement location="${actionbarsherlock.output.dir}"/>
+    <pathelement location="${basedir}/../ActionBarSherlock/libs/android-support-v4.jar"/>
+  </path>
+  
+  <path id="actionbarsherlock.runtime.module.classpath">
+    <pathelement location="${actionbarsherlock.testoutput.dir}"/>
+    <pathelement location="${actionbarsherlock.output.dir}"/>
+    <pathelement location="${basedir}/../ActionBarSherlock/libs/android-support-v4.jar"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.actionbarsherlock">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.actionbarsherlock">
+    <patternset refid="compiler.excluded"/>
+    <patternset refid="excluded.from.module.actionbarsherlock"/>
+  </patternset>
+  
+  <path id="actionbarsherlock.module.sourcepath">
+    <dirset dir="${module.actionbarsherlock.basedir}/../ActionBarSherlock">
+      <include name="gen"/>
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.actionbarsherlock" depends="compile.module.actionbarsherlock.production,compile.module.actionbarsherlock.tests" description="Compile module ActionBarSherlock"/>
+  
+  <target name="compile.module.actionbarsherlock.production" depends="register.custom.compilers" description="Compile module ActionBarSherlock; production classes">
+    <mkdir dir="${actionbarsherlock.output.dir}"/>
+    <javac2 destdir="${actionbarsherlock.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.actionbarsherlock}/javac">
+      <compilerarg line="${compiler.args.actionbarsherlock}"/>
+      <bootclasspath refid="actionbarsherlock.module.bootclasspath"/>
+      <classpath refid="actionbarsherlock.module.production.classpath"/>
+      <src refid="actionbarsherlock.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.actionbarsherlock"/>
+    </javac2>
+    
+    <copy todir="${actionbarsherlock.output.dir}">
+      <fileset dir="${module.actionbarsherlock.basedir}/../ActionBarSherlock/gen">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.actionbarsherlock"/>
+      </fileset>
+      <fileset dir="${module.actionbarsherlock.basedir}/../ActionBarSherlock/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.actionbarsherlock"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.actionbarsherlock.tests" depends="register.custom.compilers,compile.module.actionbarsherlock.production" description="compile module ActionBarSherlock; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.actionbarsherlock" description="cleanup module">
+    <delete dir="${actionbarsherlock.output.dir}"/>
+    <delete dir="${actionbarsherlock.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module Meshball -->
+  
+  <dirname property="module.meshball.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.meshball" value="${jdk.home.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.bin.meshball" value="${jdk.bin.android_4.0.3_google_apis}"/>
+  <property name="module.jdk.classpath.meshball" value="jdk.classpath.android_4.0.3_google_apis"/>
+  
+  <property name="compiler.args.meshball" value="${compiler.args}"/>
+  
+  <property name="meshball.output.dir" value="${module.meshball.basedir}/out/production/Meshball"/>
+  <property name="meshball.testoutput.dir" value="${module.meshball.basedir}/out/test/Meshball"/>
+  
+  <path id="meshball.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="meshball.module.production.classpath">
+    <path refid="${module.jdk.classpath.meshball}"/>
+    <path refid="library.android-support-v4.classpath"/>
+  </path>
+  
+  <path id="meshball.runtime.production.module.classpath">
+    <pathelement location="${meshball.output.dir}"/>
+    <path refid="library.android-support-v4.classpath"/>
+  </path>
+  
+  <path id="meshball.module.classpath">
+    <path refid="${module.jdk.classpath.meshball}"/>
+    <pathelement location="${meshball.output.dir}"/>
+    <path refid="library.android-support-v4.classpath"/>
+  </path>
+  
+  <path id="meshball.runtime.module.classpath">
+    <pathelement location="${meshball.testoutput.dir}"/>
+    <pathelement location="${meshball.output.dir}"/>
+    <path refid="library.android-support-v4.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.meshball">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.meshball">
+    <patternset refid="compiler.excluded"/>
+    <patternset refid="excluded.from.module.meshball"/>
+  </patternset>
+  
+  <path id="meshball.module.sourcepath">
+    <dirset dir="${module.meshball.basedir}">
+      <include name="src"/>
+      <include name="gen"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.meshball" depends="compile.module.meshball.production,compile.module.meshball.tests" description="Compile module Meshball"/>
+  
+  <target name="compile.module.meshball.production" depends="register.custom.compilers" description="Compile module Meshball; production classes">
+    <mkdir dir="${meshball.output.dir}"/>
+    <javac2 destdir="${meshball.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.meshball}/javac">
+      <compilerarg line="${compiler.args.meshball}"/>
+      <bootclasspath refid="meshball.module.bootclasspath"/>
+      <classpath refid="meshball.module.production.classpath"/>
+      <src refid="meshball.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.meshball"/>
+    </javac2>
+    
+    <copy todir="${meshball.output.dir}">
+      <fileset dir="${module.meshball.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.meshball"/>
+      </fileset>
+      <fileset dir="${module.meshball.basedir}/gen">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.meshball"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.meshball.tests" depends="register.custom.compilers,compile.module.meshball.production" description="compile module Meshball; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.meshball" description="cleanup module">
+    <delete dir="${meshball.output.dir}"/>
+    <delete dir="${meshball.testoutput.dir}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+  
+  <target name="clean" depends="clean.module.actionbarsherlock, clean.module.meshball" description="cleanup all"/>
+  
+  <target name="build.modules" depends="init, clean, compile.module.actionbarsherlock, compile.module.meshball" description="build all modules"/>
+  
+  <target name="all" depends="build.modules" description="build all"/>
+</project>
