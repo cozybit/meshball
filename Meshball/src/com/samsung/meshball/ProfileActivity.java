@@ -90,9 +90,10 @@ public class ProfileActivity
 
                     if ( app.isFirstTime() ) {
                         app.setFirstTime( false );
-                        app.savePreferences();
-                        finish();
                     }
+
+                    app.savePreferences();
+                    finish();
                 }
                 else {
                     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
@@ -206,7 +207,35 @@ public class ProfileActivity
     public void onBackPressed() {
         Log.mark( TAG );
 
+        EditText displayNameText = (EditText) findViewById( R.id.screenname );
+        String screenName = displayNameText.getText().toString();
+        if ( validateDisplayName( screenName ) ) {
+            super.onBackPressed();
+        }
+        else {
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //Yes button clicked
+                            break;
 
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //No button clicked
+                            break;
+                    }
+                }
+            };
+
+            String message = getString( R.string.dlg_displayname_text );
+            String title = getString( R.string.dlg_displayname_title );
+            String buttonTitle = getString( R.string.okay );
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
+            builder.setMessage(message).setTitle(title).setPositiveButton(buttonTitle, dialogClickListener);
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
     }
-
 }
