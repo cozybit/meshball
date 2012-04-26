@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@color/solid_white">
+
+    <TextView
+            android:id="@+id/confirm_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/solid_black"
+            android:text="Confirm Hit:"
+            android:textSize="22sp">
+    </TextView>
+
+    <ImageView
+            android:id="@+id/confirm_picture"
+            android:background="@drawable/bordered_drawable"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_below="@id/confirm_label"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/missing_profile"
+            android:onClick="true"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_margin="5dp"/>
+
+    <TextView
+            android:id="@+id/hint_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/confirm_picture"
+            android:textColor="@color/solid_black"
+            android:layout_marginTop="20dp"
+            android:text="Giraffe Master claims to have hit Foobar Fighter"
+            android:textSize="15sp">
+    </TextView>
+
+    <ImageView
+            android:id="@+id/player_picture"
+            android:background="@drawable/bordered_drawable"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_marginTop="20dp"
+            android:layout_below="@id/hint_label"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/missing_profile"
+            android:onClick="true"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_margin="5dp"/>
+
+    <Button android:id="@+id/confirm_hit_button"
+            android:layout_width="150"
+            android:layout_margin="20dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/player_picture"
+            android:layout_alignParentLeft="true"
+            android:text="Confirm" />
+
+    <Button android:id="@+id/bad_hit_button"
+            android:layout_width="150"
+            android:layout_margin="20dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/player_picture"
+            android:layout_alignParentRight="true"
+            android:text="Bad Shot" />
+
+</RelativeLayout>

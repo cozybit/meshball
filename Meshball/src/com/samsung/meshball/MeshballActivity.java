@@ -1,12 +1,14 @@
 package com.samsung.meshball;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.*;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
@@ -23,11 +25,13 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
     private boolean hasSurface = false;
     private InactivityTimer inactivityTimer;
     private CameraManager cameraManager;
-    private ViewfinderView viewfinderView;
+    private ImageButton fireButton;
+    private TextView scoreLabel;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        Log.mark( TAG );
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();
@@ -37,13 +41,66 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
 
         hasSurface = false;
         inactivityTimer = new InactivityTimer( this );
+
+        MeshballApplication app = (MeshballApplication) getApplication();
+        app.loadPreferences();
+
+        if ( app.isFirstTime() || (app.getScreenName() == null) ) {
+            Log.i(TAG, "Display name is %s or is first time (%s). Switching to the ProfileActivity...",
+                  app.getScreenName(), (app.isFirstTime() ? "YES" : "NO"));
+            startActivity(new Intent(this, ProfileActivity.class));
+        }
+
+        scoreLabel = (TextView) findViewById( R.id.score_label );
+        fireButton = (ImageButton) findViewById( R.id.fire_button );
+
+        // Based on our orientation and handedness, place our button...
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        if ( (display.getRotation() == Surface.ROTATION_90) || (display.getRotation() == Surface.ROTATION_180) ) {
+            Log.d( TAG, "LANDSCAPE!" );
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                                                                           FrameLayout.LayoutParams.WRAP_CONTENT);
+
+            if ( getString(R.string.right).equalsIgnoreCase( app.getHandedNess() ) ) {
+                Log.d( TAG, "Right handed!" );
+                params.gravity = 0x10 | 0x05;
+            }
+            else {
+                Log.d( TAG, "Left handed!" );
+                params.gravity = 0x10 | 0x03;
+            }
+
+            fireButton.setLayoutParams( params );
+
+            params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                                                  FrameLayout.LayoutParams.WRAP_CONTENT);
+            params.gravity = 0x50 | 0x11;
+            scoreLabel.setLayoutParams( params );
+        }
+
+        fireButton.setOnTouchListener( new View.OnTouchListener()
+        {
+            @Override
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                if ( event.getAction() == MotionEvent.ACTION_DOWN ) {
+                    fireButton.setImageDrawable( getResources().getDrawable( R.drawable.fire_button_pressed ) );
+                    return true;
+                }
+                else if ( event.getAction() == MotionEvent.ACTION_UP ) {
+                    fireButton.setImageDrawable( getResources().getDrawable( R.drawable.fire_button ) );
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @Override
     protected void onDestroy()
     {
         inactivityTimer.shutdown();
-
         super.onDestroy();
     }
 
@@ -57,8 +114,8 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
         // off screen.
         cameraManager = new CameraManager( getApplication() );
 
-        viewfinderView = (ViewfinderView) findViewById( R.id.viewfinder_view );
-        viewfinderView.setCameraManager( cameraManager );
+        ViewfinderView viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
+        viewfinderView.setCameraManager(cameraManager);
 
         SurfaceView surfaceView = (SurfaceView) findViewById( R.id.preview_view );
         SurfaceHolder surfaceHolder = surfaceView.getHolder();
@@ -94,6 +151,13 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig)
+    {
+        Log.mark( TAG );
+        super.onConfigurationChanged( newConfig );
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
         menu.add(Menu.NONE, R.id.menu_players, 0, "Players")
@@ -123,7 +187,8 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
         Intent intent;
         switch(item.getItemId()) {
             case R.id.menu_players:
-                Toast.makeText( this, "Players!", Toast.LENGTH_LONG ).show();
+                intent = new Intent(this, PlayersActivity.class);
+                startActivity(intent);
                 return true;
 
             case R.id.menu_share:
@@ -201,6 +266,23 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
         builder.setPositiveButton( R.string.okay, new FinishListener( this ) );
         builder.setOnCancelListener( new FinishListener( this ) );
         builder.show();
+    }
+
+    public void firePressed(View v)
+    {
+
+    }
+
+    public void hitsPressed(View v)
+    {
+        Intent intent = new Intent(this, ReviewPlayerActivity.class);
+        startActivity(intent);
+    }
+
+    public void reviewPressed(View v)
+    {
+        Intent intent = new Intent(this, ReviewPlayerActivity.class);
+        startActivity(intent);
     }
 
 }

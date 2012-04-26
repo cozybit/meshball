@@ -15,7 +15,7 @@
             android:title="@string/preferences_handedness_title"
             android:summary="@string/preferences_handedness_summary"
             android:key="meshball.handedness"
-            android:defaultValue="Yelp"
+            android:defaultValue="Right"
             android:entries="@array/handedness_items"
             android:entryValues="@array/handedness_values" />
 

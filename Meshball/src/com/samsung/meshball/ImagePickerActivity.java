@@ -147,8 +147,8 @@ public class ImagePickerActivity extends SherlockActivity
 
             intent.setData( Uri.fromFile( imageFile ) );
 
-            intent.putExtra( "outputX", 250 );
-            intent.putExtra( "outputY", 250 );
+            intent.putExtra( "outputX", 300 );
+            intent.putExtra( "outputY", 300 );
             intent.putExtra( "aspectX", 1 );
             intent.putExtra( "aspectY", 1 );
             intent.putExtra( "scale", true );
@@ -234,7 +234,7 @@ public class ImagePickerActivity extends SherlockActivity
         BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImageUri), null, o);
 
         // The new size we want to scale to
-        final int REQUIRED_SIZE = 200;
+        final int REQUIRED_SIZE = 300;
 
         // Find the correct scale value. It should be the power of 2.
         int width_tmp = o.outWidth, height_tmp = o.outHeight;
@@ -254,18 +254,6 @@ public class ImagePickerActivity extends SherlockActivity
         return BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImageUri), null, o2);
     }
 
-    // onClick methods
-
-    public void onPickImage(View target)
-    {
-        Log.mark(TAG);
-
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_IMAGE );
-    }
-    
     public void onTakePicture(View target)
     {
         tmpImageFile = MediaManager.getOutputMediaFile( MediaManager.MEDIA_TYPE_IMAGE );

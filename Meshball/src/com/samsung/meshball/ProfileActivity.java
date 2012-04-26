@@ -23,6 +23,8 @@ public class ProfileActivity
 
     public static final String PROFILE_IMAGE = "com.samsung.meshball.PROFILE_IMAGE";
 
+    private boolean pictureSet = true;
+
     private BroadcastReceiver profileReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive( final Context context, Intent intent) {
@@ -38,6 +40,7 @@ public class ProfileActivity
                         public void run() {
                             ImageView profileImageView = (ImageView) findViewById( R.id.profile_imageview );
                             profileImageView.setImageBitmap( profileImage );
+                            pictureSet = true;
                         }
                     });
                 }
@@ -67,6 +70,10 @@ public class ProfileActivity
 
         final MeshballApplication app = (MeshballApplication) getApplication();
 
+        if ( app.isFirstTime() ) {
+            pictureSet = false;
+        }
+
         Button done = (Button) findViewById( R.id.update_button );
         done.setOnClickListener( new Button.OnClickListener() {
 
@@ -76,7 +83,7 @@ public class ProfileActivity
                 Log.mark( TAG );
                 EditText displayNameText = (EditText) findViewById( R.id.screenname );
                 String screenName = displayNameText.getText().toString();
-                if ( validateDisplayName(screenName) ) {
+                if ( validateDisplayName(screenName) && pictureSet ) {
 
                     Bitmap profileImage = app.getTempProfileImage();
                     if ( profileImage != null ) {

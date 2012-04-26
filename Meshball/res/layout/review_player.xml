@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@color/solid_white">
+
+    <TextView
+            android:id="@+id/confirm_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/solid_black"
+            android:text="Review Hit:"
+            android:textSize="22sp">
+    </TextView>
+
+    <ImageView
+            android:id="@+id/confirm_picture"
+            android:background="@drawable/bordered_drawable"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_below="@id/review_label"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/missing_profile"
+            android:onClick="true"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_margin="5dp"/>
+
+    <TextView
+            android:id="@+id/hint_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/review_picture"
+            android:textColor="@color/solid_black"
+            android:layout_marginTop="10dp"
+            android:text="Scroll through list and match the player:"
+            android:textSize="16sp">
+    </TextView>
+
+    <RelativeLayout
+            android:id="@+id/profile_imageframe"
+            android:layout_width="160dp"
+            android:layout_height="210dp"
+            android:layout_margin="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/hint_label">
+
+        <GridView android:id="@+id/player_grid"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:numColumns="1"
+                  android:verticalSpacing="0dp"
+                  android:horizontalSpacing="10dp"
+                  android:stretchMode="columnWidth"
+                  android:gravity="center"/>
+    </RelativeLayout>
+
+    <TextView
+            android:id="@+id/hint_label2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/profile_imageframe"
+            android:textColor="@color/solid_black"
+            android:text="Click on the player to 'Hit' them"
+            android:textSize="16sp">
+    </TextView>
+
+</RelativeLayout>

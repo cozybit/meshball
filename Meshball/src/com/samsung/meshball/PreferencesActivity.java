@@ -3,6 +3,7 @@ package com.samsung.meshball;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
@@ -32,5 +33,16 @@ public class PreferencesActivity extends PreferenceActivity
         String currentHandedness = settings.getString( PREF_HANDEDNESS, "Right" );
         ListPreference listPreference = (ListPreference) findPreference(PREF_HANDEDNESS);
         listPreference.setTitle(getString(R.string.preferences_handedness, currentHandedness));
+
+        listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
+        {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object object)
+            {
+                preference.setTitle(getString(R.string.preferences_handedness, object));
+                return true;
+            }
+        });
+
     }
 }

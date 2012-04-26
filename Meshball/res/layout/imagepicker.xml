@@ -8,16 +8,25 @@
     android:layout_height="fill_parent"
     android:background="@color/solid_white" >
 
+    <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="26dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/meshball_icon" />
+
     <TextView
-        android:id="@+id/ip_your_picture_label"
-        style="@style/ShadowedTextSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:text="@string/title_profile_picture"
-        android:textSize="18sp" >
+            android:id="@+id/ip_your_picture_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/title_profile_picture"
+            android:textColor="@color/solid_black"
+            android:textSize="18sp" >
     </TextView>
 
     <FrameLayout
@@ -29,37 +38,26 @@
 
         <ImageView
             android:id="@+id/ip_profile_image_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
             android:layout_gravity="top|center_horizontal"
             android:layout_margin="20dp"
             android:adjustViewBounds="true"
             android:background="@drawable/bordered_drawable"
-            android:maxHeight="150dp"
-            android:maxWidth="150dp"
-            android:scaleType="fitCenter"
+            android:maxHeight="300dp"
+            android:maxWidth="300dp"
+            android:scaleType="fitXY"
             android:src="@drawable/missing_profile" />
     </FrameLayout>
 
     <Button
         android:id="@+id/ip_take_picture_button"
-        android:layout_width="200dp"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:text="@string/take"
         android:layout_below="@id/ip_image_frame"
         android:onClick="onTakePicture"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
-        android:id="@+id/ip_pick_picture_button"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="@string/pick"
-        android:layout_below="@id/ip_take_picture_button"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:onClick="onPickImage"
         android:layout_centerHorizontal="true"/>
 
     <Button

@@ -38,7 +38,7 @@
     <color name="result_view">#b0000000</color>
     <color name="viewfinder_frame">#ff000000</color>
     <color name="viewfinder_laser">#ffff0000</color>
-    <color name="viewfinder_mask">#60000000</color>
+    <color name="viewfinder_mask">#40000000</color>
     <color name="contents_text">#ff000000</color>
     <color name="encode_view">#ffffffff</color>
     <color name="status_text">#ffffffff</color>
