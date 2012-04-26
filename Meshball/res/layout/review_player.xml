@@ -6,7 +6,7 @@
                 android:background="@color/solid_white">
 
     <TextView
-            android:id="@+id/confirm_label"
+            android:id="@+id/review_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
@@ -18,7 +18,7 @@
     </TextView>
 
     <ImageView
-            android:id="@+id/confirm_picture"
+            android:id="@+id/review_picture"
             android:background="@drawable/bordered_drawable"
             android:layout_width="160dp"
             android:layout_height="160dp"

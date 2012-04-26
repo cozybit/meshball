@@ -57,7 +57,7 @@
             android:layout_margin="5dp"/>
 
     <Button android:id="@+id/confirm_hit_button"
-            android:layout_width="150"
+            android:layout_width="150dp"
             android:layout_margin="20dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/player_picture"
@@ -65,7 +65,7 @@
             android:text="Confirm" />
 
     <Button android:id="@+id/bad_hit_button"
-            android:layout_width="150"
+            android:layout_width="150dp"
             android:layout_margin="20dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/player_picture"
