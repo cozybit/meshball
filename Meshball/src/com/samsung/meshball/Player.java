@@ -10,21 +10,21 @@ import android.graphics.Bitmap;
  */
 public class Player
 {
-    private int playerID;
+    private String playerID;
     private String screenName;
     private Bitmap picture;
     private String hitBy;
     private String reviewedBy;
     private int shots = 0;
 
-    public Player(int playerID, String screenName, Bitmap picture)
+    public Player(String playerID, String screenName, Bitmap picture)
     {
         this.playerID = playerID;
         this.screenName = screenName;
         this.picture = picture;
     }
 
-    public int getPlayerID()
+    public String getPlayerID()
     {
         return playerID;
     }
@@ -91,13 +91,13 @@ public class Player
 
         Player player = (Player) o;
 
-        return playerID == player.playerID;
+        return !(playerID != null ? !playerID.equals(player.playerID) : player.playerID != null);
     }
 
     @Override
     public int hashCode()
     {
-        return playerID;
+        return playerID != null ? playerID.hashCode() : 0;
     }
 
     @Override

@@ -39,7 +39,6 @@ public final class ViewfinderView
     private static final int[] SCANNER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
     private static final long ANIMATION_DELAY = 80L;
     private static final int CURRENT_POINT_OPACITY = 0xA0;
-    private static final int MAX_RESULT_POINTS = 20;
     private static final int POINT_SIZE = 6;
 
     private CameraManager cameraManager;
@@ -50,6 +49,8 @@ public final class ViewfinderView
     private final int frameColor;
     private final int laserColor;
     private int scannerAlpha;
+
+    private Bitmap splatter;
 
     // This constructor is used when the class is built from an XML resource.
     public ViewfinderView(Context context, AttributeSet attrs)
@@ -64,6 +65,7 @@ public final class ViewfinderView
         frameColor = resources.getColor(R.color.viewfinder_frame);
         laserColor = resources.getColor(R.color.viewfinder_laser);
         scannerAlpha = 0;
+        splatter = null;
     }
 
     public void setCameraManager(CameraManager cameraManager)
@@ -91,6 +93,16 @@ public final class ViewfinderView
         canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1, paint);
         canvas.drawRect(0, frame.bottom + 1, width, height, paint);
 
+        // Are we in a fire state?
+        if ( splatter != null ) {
+
+            float left = (width / 2) - (splatter.getWidth() / 2);
+            float top = (height / 2) - splatter.getHeight();
+
+            paint.setAlpha(CURRENT_POINT_OPACITY);
+            canvas.drawBitmap( splatter, left, top, paint );
+        }
+
         if(resultBitmap != null) {
             // Draw the opaque result bitmap over the scanning rectangle
             paint.setAlpha(CURRENT_POINT_OPACITY);
@@ -114,13 +126,6 @@ public final class ViewfinderView
 
             middle = frame.width() / 2 + frame.left;
             canvas.drawRect(middle - 1, frame.top + 2, middle + 2, frame.bottom - 1, paint);
-
-            Rect previewFrame = cameraManager.getFramingRectInPreview();
-            float scaleX = frame.width() / (float) previewFrame.width();
-            float scaleY = frame.height() / (float) previewFrame.height();
-
-            int frameLeft = frame.left;
-            int frameTop = frame.top;
 
             // Request another update at the animation interval, but only repaint the laser line,
             // not the entire viewfinder mask.
@@ -153,4 +158,13 @@ public final class ViewfinderView
         invalidate();
     }
 
+    public void setSplatter(Bitmap splatter)
+    {
+        this.splatter = splatter;
+    }
+
+    public void clearSplatter()
+    {
+        splatter = null;
+    }
 }

@@ -17,17 +17,19 @@
 package com.samsung.meshball.camera;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.graphics.*;
 import android.hardware.Camera;
-import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.view.Display;
+import android.view.Surface;
 import android.view.SurfaceHolder;
-import com.samsung.meshball.PreferencesActivity;
+import android.view.WindowManager;
+import com.samsung.meshball.ViewfinderView;
 import com.samsung.meshball.utils.Log;
+import com.samsung.meshball.utils.MediaManager;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This object wraps the Camera service object and expects to be the only one talking to it. The
@@ -38,8 +40,7 @@ import java.io.IOException;
  */
 public final class CameraManager
 {
-
-    private static final String TAG = CameraManager.class.getSimpleName();
+    private static final String TAG = CameraManager.class.getName();
 
     private static final int MIN_FRAME_WIDTH = 240;
     private static final int MIN_FRAME_HEIGHT = 240;
@@ -53,26 +54,108 @@ public final class CameraManager
     private Rect framingRectInPreview;
     private boolean initialized;
     private boolean previewing;
-    private boolean reverseImage;
     private int requestedFramingRectWidth;
     private int requestedFramingRectHeight;
 
-    /**
-     * Preview frames are delivered here, which we pass on to the registered handler. Make sure to
-     * clear the handler so it will only receive one message.
-     */
-    private final PreviewCallback previewCallback;
-    /**
-     * Autofocus callbacks arrive here, and are dispatched to the Handler which requested them.
-     */
-    private final AutoFocusCallback autoFocusCallback;
+    private ViewfinderView viewFinder;
+    private Bitmap splatter;
 
-    public CameraManager( Context context )
+    private boolean inShot;
+
+    private Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback()
+    {
+        @Override
+        public void onAutoFocus(boolean success, final Camera camera)
+        {
+            Log.mark(TAG);
+            camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+        }
+    };
+
+    private Camera.PictureCallback jpegPictureCallback = new Camera.PictureCallback()
+    {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera)
+        {
+            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+
+            stopPreview();
+
+            if ( data != null ) {
+
+                viewFinder.setSplatter( splatter );
+
+                Bitmap image = BitmapFactory.decodeByteArray( data, 0, data.length );
+                Matrix mat = new Matrix();
+
+                // This is really dumb
+                Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                if ( (display.getRotation() == Surface.ROTATION_0) || (display.getRotation() == Surface.ROTATION_270) ) {
+                    mat.postRotate(90);
+                }
+
+                Bitmap rotatedImage = Bitmap.createBitmap( image, 0, 0, image.getWidth(), image.getHeight(), mat, true );
+                Bitmap mutableBitmap = rotatedImage.copy( Bitmap.Config.ARGB_8888, true );
+
+                // Now we need to composite the splatter
+                Canvas canvas = new Canvas( mutableBitmap );
+
+                mat = new Matrix();
+                mat.setScale( 0.3f, 0.3f );
+
+                Bitmap scaledImage = Bitmap.createBitmap( splatter, 0, 0, splatter.getWidth(), splatter.getHeight(), mat, true );
+
+                float left = (canvas.getWidth() / 2) - (scaledImage.getWidth() / 2);
+                float top = (canvas.getHeight() / 2) - (scaledImage.getHeight() / 2);
+
+                canvas.drawBitmap( scaledImage, left, top, null );
+
+                try {
+                    Log.i( TAG, "SAVING IMAGE!" );
+                    MediaManager.saveBitmapImage(mutableBitmap, "FOOBAR.JPG", 100);
+                }
+                catch (FileNotFoundException e) {
+                    Log.e(TAG, e, "Caught exception while writing profile image: %s", e.getMessage());
+                }
+                catch (IOException e) {
+                    Log.e(TAG, e, "Caught exception while writing profile image: %s", e.getMessage());
+                    e.printStackTrace();
+                }
+
+                camera.addCallbackBuffer( data );
+            }
+
+            inShot = false;
+        }
+    };
+
+    private Camera.PictureCallback rawPictureCallback = new Camera.PictureCallback()
+    {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera)
+        {
+            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+
+            // Ignore the raw picture..
+            if ( data != null ) {
+                camera.addCallbackBuffer( data );
+            }
+        }
+    };
+
+    private Camera.ShutterCallback shutterCallback = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter()
+        {
+            Log.mark( TAG );
+        }
+    };
+
+    public CameraManager( Context context, ViewfinderView viewFinder )
     {
         this.context = context;
+        this.viewFinder = viewFinder;
         this.configManager = new CameraConfigurationManager( context );
-        previewCallback = new PreviewCallback( configManager );
-        autoFocusCallback = new AutoFocusCallback();
     }
 
     /**
@@ -107,11 +190,12 @@ public final class CameraManager
                 requestedFramingRectWidth = 0;
                 requestedFramingRectHeight = 0;
             }
+
+            int bufferSize = configManager.getRawBufferSize();
+            byte[] buffer = new byte[bufferSize];
+            camera.addCallbackBuffer(buffer);
         }
         configManager.setDesiredCameraParameters( theCamera );
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( context );
-        reverseImage = prefs.getBoolean( PreferencesActivity.PREF_REVERSE_IMAGE, false );
     }
 
     /**
@@ -119,6 +203,8 @@ public final class CameraManager
      */
     public void closeDriver()
     {
+        Log.mark( TAG );
+
         if ( camera != null )
         {
             camera.release();
@@ -135,9 +221,13 @@ public final class CameraManager
      */
     public void startPreview()
     {
+        Log.mark( TAG );
+
         Camera theCamera = camera;
-        if ( theCamera != null && !previewing )
-        {
+        if ( theCamera != null && !previewing ) {
+
+            Log.d( TAG, "Starting camera preview" );
+
             theCamera.startPreview();
             previewing = true;
         }
@@ -148,53 +238,14 @@ public final class CameraManager
      */
     public void stopPreview()
     {
+        Log.mark( TAG );
+
         if ( camera != null && previewing )
         {
+            Log.d( TAG, "Stopping camera preview" );
+
             camera.stopPreview();
-            previewCallback.setHandler( null, 0 );
-            autoFocusCallback.setHandler( null, 0 );
             previewing = false;
-        }
-    }
-
-    /**
-     * A single preview frame will be returned to the handler supplied. The data will arrive as byte[]
-     * in the message.obj field, with width and height encoded as message.arg1 and message.arg2,
-     * respectively.
-     *
-     * @param handler The handler to send the message to.
-     * @param message The what field of the message to be sent.
-     */
-    public void requestPreviewFrame( Handler handler, int message )
-    {
-        Camera theCamera = camera;
-        if ( theCamera != null && previewing )
-        {
-            previewCallback.setHandler( handler, message );
-            theCamera.setOneShotPreviewCallback( previewCallback );
-        }
-    }
-
-    /**
-     * Asks the camera hardware to perform an autofocus.
-     *
-     * @param handler The Handler to notify when the autofocus completes.
-     * @param message The message to deliver.
-     */
-    public void requestAutoFocus( Handler handler, int message )
-    {
-        if ( camera != null && previewing )
-        {
-            autoFocusCallback.setHandler( handler, message );
-            try
-            {
-                camera.autoFocus( autoFocusCallback );
-            }
-            catch ( RuntimeException re )
-            {
-                // Have heard RuntimeException reported in Android 4.0.x+; continue?
-                Log.w(TAG, re, "Unexpected exception while focusing");
-            }
         }
     }
 
@@ -314,5 +365,35 @@ public final class CameraManager
             requestedFramingRectWidth = width;
             requestedFramingRectHeight = height;
         }
+    }
+
+    public void takePicture(Bitmap bitmap)
+    {
+        Log.i(TAG, "TAKING PICTURE!");
+
+        splatter = bitmap;
+        camera.startPreview();
+
+        Camera.Parameters p = camera.getParameters();
+        List<String> focusModes = p.getSupportedFocusModes();
+
+        if( (focusModes != null) && focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO) ) {
+            //Phone supports autofocus! Focus first, then take picture
+            camera.autoFocus( autoFocusCallback );
+        }
+        else {
+            //Phone does not support autofocus! Just take the picture
+            Log.d( TAG, "PHONE DOES NOT SUPPORT AUTOFOCUS" );
+            camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );        }
+    }
+
+    public boolean isInShot()
+    {
+        return inShot;
+    }
+
+    public void setInShot(boolean inShot)
+    {
+        this.inShot = inShot;
     }
 }

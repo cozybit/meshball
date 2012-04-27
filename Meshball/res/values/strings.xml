@@ -38,6 +38,7 @@
     <string name="title_profile_picture">Your Profile Picture</string>
 
     <string name="toast_failed_to_delete_tmp_file">Failed to delete temporary file.</string>
+    <string name="toast_service_terminated">Magnet Service Terminated</string>
 
     <string name="msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>
 
@@ -49,6 +50,14 @@
 
     <string name="dlg_firsttime_title">First Time</string>
     <string name="dlg_firsttime_text">This is the first time you are using Meshball. Please setup your profile.\n\nNothing complicated, just a name and picture to display to identify you when you are in the game.</string>
+
+    <string name="dlg_noservice_title">Missing</string>
+    <string name="dlg_noservice_message">The Magnet Service does not yet appear to be installed. You must install the Magnet APK before you can use this application.</string>
+
+    <string name="dlg_not_valid_sdk_title">Invalid SDK</string>
+    <string name="dlg_not_valid_sdk_message">Sorry, but the SDK version is not valid for the installed Magnet Service.</string>
+
+    <string name="dlg_disabled_wifi_message">Your wireless is currently disabled or you are not connected to a network. You need to enable your wireless in order to be able to share files.\n\nPress Settings to enable your wifi.</string>
 
     <string name="crop_option_error_message">No available crop option.</string>
     <string name="crop_option_choose_title">Choose Crop Option</string>

@@ -60,6 +60,7 @@ public class MediaManager
     public static void saveBitmapImage(Bitmap bitmap, Uri uri, int quality)
             throws IOException
     {
+        Log.i( TAG, "Uri = %s, quality = %d", uri, quality );
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(uri.getPath());
@@ -87,7 +88,7 @@ public class MediaManager
 
     public static File getMediaStoragePath()
     {
-        File mediaStorageDir = new File( Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Herd");
+        File mediaStorageDir = new File( Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Meshball");
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
 

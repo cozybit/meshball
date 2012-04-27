@@ -18,6 +18,7 @@ package com.samsung.meshball.camera;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.hardware.Camera;
 import android.preference.PreferenceManager;
@@ -34,7 +35,6 @@ import java.util.Collection;
  */
 final class CameraConfigurationManager
 {
-
     private static final String TAG = "CameraConfiguration";
     private static final int MIN_PREVIEW_PIXELS = 320 * 240; // small screen
     private static final int MAX_PREVIEW_PIXELS = 800 * 480; // large/HD screen
@@ -42,6 +42,8 @@ final class CameraConfigurationManager
     private final Context context;
     private Point screenResolution;
     private Point cameraResolution;
+    private int rawBufferSize;
+    private int jpegBufferSize;
 
     CameraConfigurationManager( Context context )
     {
@@ -70,6 +72,18 @@ final class CameraConfigurationManager
         Log.i( TAG, "Screen resolution: " + screenResolution );
         cameraResolution = findBestPreviewSizeValue( parameters, screenResolution, false );
         Log.i( TAG, "Camera resolution: " + cameraResolution );
+
+        Camera.Size size = parameters.getPictureSize();
+
+        int imgFormat = parameters.getPreviewFormat();
+        int bpp = ImageFormat.getBitsPerPixel( imgFormat );
+
+        jpegBufferSize = size.width * size.height * (bpp / 8);
+
+        imgFormat = parameters.getPictureFormat();
+        bpp = ImageFormat.getBitsPerPixel( imgFormat );
+
+        rawBufferSize = size.width * size.height * (bpp / 8);
     }
 
     void setDesiredCameraParameters( Camera camera )
@@ -116,6 +130,16 @@ final class CameraConfigurationManager
     Point getScreenResolution()
     {
         return screenResolution;
+    }
+
+    int getRawBufferSize()
+    {
+        return rawBufferSize;
+    }
+
+    public int getJpegBufferSize()
+    {
+        return jpegBufferSize;
     }
 
     void setTorch( Camera camera, boolean newSetting )

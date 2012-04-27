@@ -100,6 +100,8 @@ public class ProfileActivity
                     }
 
                     app.savePreferences();
+                    app.broadcastIdentity();
+
                     finish();
                 }
                 else {
