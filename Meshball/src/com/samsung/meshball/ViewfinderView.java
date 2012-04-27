@@ -97,7 +97,7 @@ public final class ViewfinderView
         if ( splatter != null ) {
 
             float left = (width / 2) - (splatter.getWidth() / 2);
-            float top = (height / 2) - splatter.getHeight();
+            float top = (height / 2) - (splatter.getHeight() / 2);
 
             paint.setAlpha(CURRENT_POINT_OPACITY);
             canvas.drawBitmap( splatter, left, top, paint );
