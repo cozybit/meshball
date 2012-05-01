@@ -63,5 +63,23 @@
     <string name="crop_option_choose_title">Choose Crop Option</string>
     <string name="crop_option_no_result_message">Sorry, but was unable to process image. Please pick another.</string>
 
+    <!-- confirm_hit.xml -->
+    <string name="confirm_lbl_txt">Confirm Hit:</string>
+    <string name="hint_lbl_txt">Giraffe Master claims to have hit Foobar Fighter</string>
+    <string name="confirm_hit_btn">Confirm</string>
+    <string name="bad_hit_btn">Bad Shot</string>
+    
+    <!-- grid_item.xml -->
+    <string name="grid_lbl_txt">Giraffe Master</string>
+    
+    <!-- main.xml -->
+    <string name="hit_counter_txt">0</string>
+    <string name="score_lbl_txt">Score: 0</string>
+    <string name="review_counter_txt">0</string>
+    
+    <!-- review_player.xml -->
+    <string name="review_lbl_txt">Review Hit:</string>
+    <string name="hint_labl_txt">Scroll through list and match the player:</string>
+    <string name="hint_labl2_txt">Click on the player to \'Hit\' them</string>
 
 </resources>

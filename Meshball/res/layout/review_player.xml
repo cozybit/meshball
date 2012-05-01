@@ -13,7 +13,7 @@
             android:layout_alignParentTop="true"
             android:layout_marginTop="20dp"
             android:textColor="@color/solid_black"
-            android:text="Review Hit:"
+            android:text="@string/review_lbl_txt"
             android:textSize="22sp">
     </TextView>
 
@@ -38,7 +38,7 @@
             android:layout_below="@id/review_picture"
             android:textColor="@color/solid_black"
             android:layout_marginTop="10dp"
-            android:text="Scroll through list and match the player:"
+            android:text="@string/hint_labl_txt"
             android:textSize="16sp">
     </TextView>
 
@@ -67,7 +67,7 @@
             android:layout_centerHorizontal="true"
             android:layout_below="@id/profile_imageframe"
             android:textColor="@color/solid_black"
-            android:text="Click on the player to 'Hit' them"
+            android:text="@string/hint_labl2_txt"
             android:textSize="16sp">
     </TextView>
 

@@ -13,7 +13,7 @@
             android:layout_alignParentTop="true"
             android:layout_marginTop="20dp"
             android:textColor="@color/solid_black"
-            android:text="Confirm Hit:"
+            android:text="@string/confirm_lbl_txt"
             android:textSize="22sp">
     </TextView>
 
@@ -38,7 +38,7 @@
             android:layout_below="@id/confirm_picture"
             android:textColor="@color/solid_black"
             android:layout_marginTop="20dp"
-            android:text="Giraffe Master claims to have hit Foobar Fighter"
+            android:text="@string/hint_lbl_txt"
             android:textSize="15sp">
     </TextView>
 
@@ -63,7 +63,7 @@
             android:layout_below="@id/player_picture"
             android:layout_alignParentLeft="true"
             android:textColor="@color/solid_black"
-            android:text="Confirm" />
+            android:text="@string/confirm_hit_btn" />
 
     <Button android:id="@+id/bad_hit_button"
             android:layout_width="150dp"
@@ -72,6 +72,6 @@
             android:layout_below="@id/player_picture"
             android:layout_alignParentRight="true"
             android:textColor="@color/solid_black"
-            android:text="Bad Shot" />
+            android:text="@string/bad_hit_btn" />
 
 </RelativeLayout>

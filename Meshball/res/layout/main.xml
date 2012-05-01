@@ -42,7 +42,7 @@
                   android:layout_marginLeft="5dp"
                   android:textColor="@color/solid_white"
                   android:textSize="20sp"
-                  android:text="0"/>
+                  android:text="@string/hit_counter_txt"/>
     </LinearLayout>
 
     <TextView android:id="@+id/score_label"
@@ -53,7 +53,7 @@
               android:layout_marginBottom="20dp"
               android:textColor="@color/solid_white"
               android:textSize="20sp"
-              android:text="Score: 0"/>
+              android:text="@string/score_lbl_txt"/>
 
     <LinearLayout android:id="@+id/review_counter_layout"
                   android:layout_width="wrap_content"
@@ -77,7 +77,7 @@
                   android:layout_marginLeft="5dp"
                   android:textColor="@color/solid_white"
                   android:textSize="20sp"
-                  android:text="0"/>
+                  android:text="@string/review_counter_txt"/>
     </LinearLayout>
 
     <ImageButton android:id="@+id/fire_button"
