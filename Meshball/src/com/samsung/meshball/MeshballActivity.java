@@ -1,43 +1,179 @@
 package com.samsung.meshball;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
+import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.view.*;
-import android.widget.*;
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.samsung.meshball.camera.CameraManager;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.samsung.meshball.utils.Log;
+import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.WifiUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Random;
+import java.util.List;
 
-public class MeshballActivity extends SherlockActivity implements SurfaceHolder.Callback
+public class MeshballActivity extends Activity
 {
     private static final String TAG = MeshballActivity.class.getName();
 
-    private boolean hasSurface = false;
+    private static final int MIN_FRAME_WIDTH = 240;
+    private static final int MIN_FRAME_HEIGHT = 240;
+    private static final int MAX_FRAME_WIDTH = 600;
+    private static final int MAX_FRAME_HEIGHT = 400;
+
+    private CameraConfigurationManager configManager;
+    private Camera camera;
+    private FrameLayout preview;
+    private Rect framingRect;
+
+    private Bitmap splatter;
+    private boolean inShot;
+    private int shotCounter = 0;
+
     private InactivityTimer inactivityTimer;
-    private CameraManager cameraManager;
     private ImageButton fireButton;
     private TextView scoreLabel;
+    private TextView reviewLabel;
+    private TextView confirmLabel;
     private ViewfinderView viewFinder;
-    private FrameLayout mainFrame;
-    private ImageView capturedImageView;
     private boolean fromCreate;
     private Handler handler;
-    private Random dice = new Random( System.currentTimeMillis() );
+
+    private Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback()
+    {
+        @Override
+        public void onAutoFocus(boolean success, final Camera camera)
+        {
+            Log.mark(TAG);
+            camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+        }
+    };
+
+    private Camera.PictureCallback jpegPictureCallback = new Camera.PictureCallback()
+    {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera)
+        {
+            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+
+            camera.stopPreview();
+
+            if ( data != null ) {
+
+                viewFinder.setSplatter( splatter );
+
+                Bitmap image = BitmapFactory.decodeByteArray(data, 0, data.length);
+                Matrix mat = new Matrix();
+
+                // This is really dumb
+                Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                if ( (display.getRotation() == Surface.ROTATION_0) || (display.getRotation() == Surface.ROTATION_270) ) {
+                    mat.postRotate(90);
+                }
+
+                Bitmap rotatedImage = Bitmap.createBitmap( image, 0, 0, image.getWidth(), image.getHeight(), mat, true );
+                Bitmap mutableBitmap = rotatedImage.copy( Bitmap.Config.ARGB_8888, true );
+
+                // Now we need to composite the splatter
+                Canvas canvas = new Canvas( mutableBitmap );
+
+                mat = new Matrix();
+                mat.setScale( 0.3f, 0.3f );
+
+                Bitmap scaledImage = Bitmap.createBitmap( splatter, 0, 0, splatter.getWidth(), splatter.getHeight(), mat, true );
+
+                float left = (canvas.getWidth() / 2) - (scaledImage.getWidth() / 2);
+                float top = (canvas.getHeight() / 2) - (scaledImage.getHeight() / 2);
+
+                canvas.drawBitmap( scaledImage, left, top, null );
+
+                MeshballApplication app = (MeshballApplication) getApplication();
+
+                try {
+                    Log.i( TAG, "SAVING AND QUEUING IMAGE!" );
+
+                    StringBuilder name = new StringBuilder();
+                    name.append(app.getPlayerID());
+                    name.append("-");
+                    name.append(shotCounter++);
+                    name.append(".JPG");
+
+                    MediaManager.saveBitmapImage(mutableBitmap, name.toString(), 100);
+                    app.getConfirmList().add(new Candidate(name.toString()));
+                }
+                catch (FileNotFoundException e) {
+                    Log.e(TAG, e, "Caught exception while writing profile image: %s", e.getMessage());
+                }
+                catch (IOException e) {
+                    Log.e(TAG, e, "Caught exception while writing profile image: %s", e.getMessage());
+                    e.printStackTrace();
+                }
+
+                camera.addCallbackBuffer( data );
+            }
+
+            inShot = false;
+        }
+    };
+
+    private Camera.PictureCallback rawPictureCallback = new Camera.PictureCallback()
+    {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera)
+        {
+            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+
+            // Ignore the raw picture..
+            if ( data != null ) {
+                camera.addCallbackBuffer( data );
+            }
+        }
+    };
+
+    private Camera.ShutterCallback shutterCallback = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter()
+        {
+            Log.mark( TAG );
+        }
+    };
+
+    private Camera getCameraInstance() {
+        Camera c = null;
+
+        try
+        {
+            c = Camera.open();
+            if ( c == null ) {
+                displayFrameworkBugMessageAndExit();
+            }
+        }
+        catch ( RuntimeException e )
+        {
+            Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
+            displayFrameworkBugMessageAndExit();
+        }
+        catch(Exception e) {
+            Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
+            displayFrameworkBugMessageAndExit();
+        }
+
+        return c;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -50,8 +186,9 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
 
         setContentView(R.layout.main);
 
+        this.configManager = new CameraConfigurationManager( getApplicationContext() );
+
         fromCreate = true;
-        hasSurface = false;
         inactivityTimer = new InactivityTimer( this );
         handler = new Handler();
 
@@ -65,11 +202,15 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
             startActivity(new Intent(this, ProfileActivity.class));
         }
 
+        preview = (FrameLayout) findViewById( R.id.preview_view );
         scoreLabel = (TextView) findViewById( R.id.score_label );
         fireButton = (ImageButton) findViewById( R.id.fire_button );
+
+        reviewLabel = (TextView) findViewById( R.id.review_counter );
+        confirmLabel = (TextView) findViewById( R.id.confirm_counter );
+
         viewFinder = (ViewfinderView) findViewById( R.id.viewfinder_view );
-        capturedImageView = (ImageView) findViewById( R.id.captured_imageview );
-        mainFrame = (FrameLayout) findViewById( R.id.main_frame );
+        viewFinder.setMeshballActivity( this );
 
         // Based on our orientation and handedness, place our button...
         Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -108,7 +249,7 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
                 else if ( event.getAction() == MotionEvent.ACTION_UP ) {
                     fireButton.setImageDrawable( getResources().getDrawable( R.drawable.fire_button ) );
 
-                    if ( ! cameraManager.isInShot() ) {
+                    if ( ! inShot ) {
                         fireShot();
 
                         // Set timer to clear the shot!
@@ -141,31 +282,25 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
         Log.mark( TAG );
         super.onResume();
 
-        // CameraManager must be initialized here, not in onCreate(). This is necessary because we don't
-        // want to open the camera driver and measure the screen size if we're going to show the help on
-        // first launch. That led to bugs where the scanning rectangle was the wrong size and partially
-        // off screen.
+        preview.removeAllViews();
 
-        cameraManager = new CameraManager( getApplication(), viewFinder );
+        camera = getCameraInstance();
 
-        ViewfinderView viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
-        viewfinderView.setCameraManager(cameraManager);
-
-        SurfaceView surfaceView = (SurfaceView) findViewById( R.id.preview_view );
-        SurfaceHolder surfaceHolder = surfaceView.getHolder();
-        if ( hasSurface )
-        {
-            // The activity was paused but not stopped, so the surface still exists. Therefore
-            // surfaceCreated() won't be called, so init the camera here.
-
-            initCamera( surfaceHolder );
+        if ( ! configManager.isInitialized() ) {
+            configManager.initFromCameraParameters(camera);
         }
-        else
-        {
-            // Install the callback and wait for surfaceCreated() to init the camera.
-            surfaceHolder.addCallback( this );
-            surfaceHolder.setType( SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS );
-        }
+        configManager.setDesiredCameraParameters( camera );
+
+        CameraPreview cameraPreview = new CameraPreview(this, camera);
+        preview.addView(cameraPreview, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) );
+
+        camera.startPreview();
+
+        MeshballApplication app = (MeshballApplication) getApplication();
+
+        reviewLabel.setText( String.valueOf( app.getReviewList().size() ) );
+        confirmLabel.setText( String.valueOf( app.getConfirmList().size() ) );
+        scoreLabel.setText( getString( R.string.score_lbl_txt, app.getScore() ) );
 
         inactivityTimer.onResume();
     }
@@ -174,25 +309,25 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
     protected void onPause()
     {
         Log.mark( TAG );
-        inactivityTimer.onPause();
-
-        cameraManager.stopPreview();
-        cameraManager.closeDriver();
-
-        if ( !hasSurface )
-        {
-            SurfaceView surfaceView = (SurfaceView) findViewById( R.id.preview_view );
-            SurfaceHolder surfaceHolder = surfaceView.getHolder();
-            surfaceHolder.removeCallback( this );
-        }
-
         super.onPause();
+
+        releaseCamera();
+
+        inactivityTimer.onPause();
+    }
+
+    private void releaseCamera()
+    {
+        if ( camera != null ) {
+            camera.release();
+            camera = null;
+        }
     }
 
     @Override
     protected void onStart()
     {
-        Log.mark( TAG );
+        Log.mark(TAG);
         super.onStart();
 
         MeshballApplication app = (MeshballApplication) getApplication();
@@ -270,54 +405,6 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
         }
     }
 
-    @Override
-    public void surfaceCreated( SurfaceHolder holder )
-    {
-        if ( holder == null )
-        {
-            Log.e( TAG, "*** WARNING *** surfaceCreated() gave us a null surface!" );
-        }
-        if ( !hasSurface )
-        {
-            hasSurface = true;
-            initCamera( holder );
-            cameraManager.startPreview();
-        }
-    }
-
-    @Override
-    public void surfaceChanged( SurfaceHolder surfaceHolder, int i, int i1, int i2 )
-    {
-
-    }
-
-    @Override
-    public void surfaceDestroyed( SurfaceHolder surfaceHolder )
-    {
-        hasSurface = false;
-    }
-
-    private void initCamera( SurfaceHolder surfaceHolder )
-    {
-        try
-        {
-            cameraManager.openDriver( surfaceHolder );
-            cameraManager.startPreview();
-        }
-        catch ( IOException ioe )
-        {
-            Log.e( TAG, ioe, "Unexpected error initializing camera: %s", ioe.getMessage() );
-            displayFrameworkBugMessageAndExit();
-        }
-        catch ( RuntimeException e )
-        {
-            // Barcode Scanner has seen crashes in the wild of this variety:
-            // java.?lang.?RuntimeException: Fail to connect to camera service
-            Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
-            displayFrameworkBugMessageAndExit();
-        }
-    }
-
     private void displayFrameworkBugMessageAndExit()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder( this );
@@ -332,29 +419,44 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
     {
         Log.d( TAG, "FIRE!!!" );
 
-        cameraManager.setInShot( true );
+        inShot = true;
         MeshballApplication app = (MeshballApplication) getApplication();
 
         // First draw a paint splatter and add some randomness in its position.
 
         Drawable drawable = app.getRandomSplatter();
-        Bitmap splatter = ((BitmapDrawable) drawable).getBitmap();
+        splatter = ((BitmapDrawable) drawable).getBitmap();
 
-        cameraManager.takePicture( splatter );
+        camera.startPreview();
+
+        Camera.Parameters p = camera.getParameters();
+        List<String> focusModes = p.getSupportedFocusModes();
+
+        if( (focusModes != null) && focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO) ) {
+            //Phone supports autofocus! Focus first, then take picture
+            camera.autoFocus( autoFocusCallback );
+        }
+        else {
+            //Phone does not support autofocus! Just take the picture
+            Log.d( TAG, "PHONE DOES NOT SUPPORT AUTOFOCUS" );
+            camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+        }
     }
 
     public void clearShot()
     {
         viewFinder.clearSplatter();
-        cameraManager.startPreview();
+        camera.startPreview();
     }
 
+    @SuppressWarnings("UnusedParameters")
     public void hitsPressed(View v)
     {
-        Intent intent = new Intent(this, ReviewPlayerActivity.class);
+        Intent intent = new Intent(this, ReviewHitActivity.class);
         startActivity(intent);
     }
 
+    @SuppressWarnings("UnusedParameters")
     public void reviewPressed(View v)
     {
         Intent intent = new Intent(this, ConfirmHitActivity.class);
@@ -397,5 +499,56 @@ public class MeshballActivity extends SherlockActivity implements SurfaceHolder.
                 .setNegativeButton(R.string.no, listener);
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    public Rect getFramingRect()
+    {
+        if ( framingRect == null )
+        {
+            if ( camera == null )
+            {
+                return null;
+            }
+            Point screenResolution = configManager.getScreenResolution();
+            int width = screenResolution.x * 3 / 4;
+            if ( width < MIN_FRAME_WIDTH )
+            {
+                width = MIN_FRAME_WIDTH;
+            }
+            else if ( width > MAX_FRAME_WIDTH )
+            {
+                width = MAX_FRAME_WIDTH;
+            }
+            int height = screenResolution.y * 3 / 4;
+            if ( height < MIN_FRAME_HEIGHT )
+            {
+                height = MIN_FRAME_HEIGHT;
+            }
+            else if ( height > MAX_FRAME_HEIGHT )
+            {
+                height = MAX_FRAME_HEIGHT;
+            }
+//            if ( context.getResources().getConfiguration().orientation == 1 ) {
+//                // Portrait...
+//                int leftOffset = (( screenResolution.x - height ) / 2) - 100;
+//                int topOffset = ( screenResolution.y - width ) / 2;
+//
+//                framingRect = new Rect( leftOffset, topOffset, leftOffset + height, topOffset + width );
+//            }
+//            else {
+//                int leftOffset = ( screenResolution.x - width ) / 2;
+//                int topOffset = (( screenResolution.y - height ) / 2) - 100;
+//
+//                framingRect = new Rect( leftOffset, topOffset, leftOffset + width, topOffset + height );
+//            }
+
+            int leftOffset = ( screenResolution.x - width ) / 2;
+            int topOffset = (( screenResolution.y - height ) / 2) - 100;
+
+            framingRect = new Rect( leftOffset, topOffset, leftOffset + width, topOffset + height );
+
+            Log.d( TAG, "Calculated framing rect: %s", framingRect );
+        }
+        return framingRect;
     }
 }

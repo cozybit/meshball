@@ -49,9 +49,10 @@ public class MeshballApplication extends Application
     private String screenName;
     private boolean firstTime;
     private String playerID = null;
+    private int score = 0;
 
-    private List<Integer> hitList = new ArrayList<Integer>();
-    private List<Integer> reviewList = new ArrayList<Integer>();
+    private List<Candidate> reviewList = new ArrayList<Candidate>();
+    private List<Candidate> confirmList = new ArrayList<Candidate>();
 
     private Map<String, Player> playersMap = new HashMap<String, Player>();
     private List<Player> players = new ArrayList<Player>();
@@ -306,9 +307,9 @@ public class MeshballApplication extends Application
         this.meshballActivity = meshballActivity;
     }
 
-    public List<Integer> getHitList()
+    public List<Candidate> getReviewList()
     {
-        return hitList;
+        return reviewList;
     }
 
     public List<Player> getPlayers()
@@ -336,9 +337,9 @@ public class MeshballApplication extends Application
         playersMap.remove( playerID );
     }
 
-    public List<Integer> getReviewList()
+    public List<Candidate> getConfirmList()
     {
-        return reviewList;
+        return confirmList;
     }
 
     public Drawable getRandomSplatter()
@@ -431,6 +432,16 @@ public class MeshballApplication extends Application
     public void setFirstTime(boolean firstTime)
     {
         this.firstTime = firstTime;
+    }
+
+    public int getScore()
+    {
+        return score;
+    }
+
+    public void incrementScore()
+    {
+        score++;
     }
 
     public void savePreferences()

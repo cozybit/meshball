@@ -4,6 +4,7 @@
 
 package com.samsung.meshball;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -20,7 +21,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
-import com.actionbarsherlock.app.SherlockActivity;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.Utils;
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * This class ...
  */
-public class ImagePickerActivity extends SherlockActivity
+public class ImagePickerActivity extends Activity
 {
     private static final String TAG = ImagePickerActivity.class.getName();
     

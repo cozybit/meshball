@@ -4,7 +4,7 @@
              android:layout_width="fill_parent"
              android:layout_height="fill_parent">
 
-    <SurfaceView android:id="@+id/preview_view"
+    <FrameLayout android:id="@+id/preview_view"
                  android:layout_width="fill_parent"
                  android:layout_height="fill_parent"/>
 
@@ -20,29 +20,29 @@
                android:visibility="gone"
                android:background="@null"/>
 
-    <LinearLayout android:id="@+id/hit_counter_layout"
+    <LinearLayout android:id="@+id/review_counter_layout"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_marginTop="10dp"
                   android:layout_marginRight="20dp"
                   android:layout_gravity="top|right">
 
-        <ImageButton android:id="@+id/hit_icon"
+        <ImageButton android:id="@+id/review_icon"
                      android:layout_width="40dp"
                      android:layout_height="40dp"
                      android:scaleType="fitCenter"
                      android:background="@null"
-                     android:onClick="hitsPressed"
+                     android:onClick="reviewPressed"
                      android:src="@drawable/meshball_icon"/>
 
-        <TextView android:id="@+id/hit_counter"
+        <TextView android:id="@+id/review_counter"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_gravity="center_vertical"
                   android:layout_marginLeft="5dp"
                   android:textColor="@color/solid_white"
                   android:textSize="20sp"
-                  android:text="@string/hit_counter_txt"/>
+                  android:text="@string/review_counter_txt"/>
     </LinearLayout>
 
     <TextView android:id="@+id/score_label"
@@ -55,29 +55,29 @@
               android:textSize="20sp"
               android:text="@string/score_lbl_txt"/>
 
-    <LinearLayout android:id="@+id/review_counter_layout"
+    <LinearLayout android:id="@+id/confirm_counter_layout"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_marginTop="10dp"
                   android:layout_marginLeft="10dp"
                   android:layout_gravity="top|left">
 
-        <ImageButton android:id="@+id/review_icon"
-                   android:layout_width="40dp"
-                   android:layout_height="40dp"
-                   android:scaleType="fitCenter"
-                   android:background="@null"
-                   android:onClick="reviewPressed"
-                   android:src="@drawable/review_icon"/>
+        <ImageButton android:id="@+id/confirm_icon"
+                     android:layout_width="40dp"
+                     android:layout_height="40dp"
+                     android:scaleType="fitCenter"
+                     android:background="@null"
+                     android:onClick="reviewPressed"
+                     android:src="@drawable/review_icon"/>
 
-        <TextView android:id="@+id/review_counter"
+        <TextView android:id="@+id/confirm_counter"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_gravity="center_vertical"
                   android:layout_marginLeft="5dp"
                   android:textColor="@color/solid_white"
                   android:textSize="20sp"
-                  android:text="@string/review_counter_txt"/>
+                  android:text="@string/confirm_counter_txt"/>
     </LinearLayout>
 
     <ImageButton android:id="@+id/fire_button"

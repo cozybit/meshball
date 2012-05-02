@@ -73,9 +73,9 @@
     <string name="grid_lbl_txt">Giraffe Master</string>
     
     <!-- main.xml -->
-    <string name="hit_counter_txt">0</string>
-    <string name="score_lbl_txt">Score: 0</string>
     <string name="review_counter_txt">0</string>
+    <string name="score_lbl_txt">Score: %d</string>
+    <string name="confirm_counter_txt">0</string>
     
     <!-- review_player.xml -->
     <string name="review_lbl_txt">Review Hit:</string>
