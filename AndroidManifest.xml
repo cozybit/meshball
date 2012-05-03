@@ -37,6 +37,7 @@
         <activity android:name=".PlayersActivity"/>
         <activity android:name=".ReviewHitActivity"/>
         <activity android:name=".ConfirmHitActivity"/>
+        <activity android:name=".FullScreenActivity"/>
 
     </application>
 </manifest>

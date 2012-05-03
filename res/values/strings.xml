@@ -8,10 +8,6 @@
     <string name="profile_picture">Your picture:</string>
     <string name="profile_change_picture">(touch to change)</string>
 
-    <string name="menu_players">Players</string>
-    <string name="menu_share">Share</string>
-    <string name="menu_settings">Settings</string>
-
     <string name="preferences_general">Meshball Settings</string>
 
     <string name="preferences_audio">Enable audio</string>
@@ -34,11 +30,16 @@
     <string name="pick">Pick</string>
     <string name="take">Take</string>
     <string name="right">Right</string>
+    <string name="leave">Leave Game</string>
+    <string name="players">Players</string>
+    <string name="has_left">%s has left the game.</string>
+    <string name="has_joined">%s has joined the game.</string>
 
     <string name="title_profile_picture">Your Profile Picture</string>
 
     <string name="toast_failed_to_delete_tmp_file">Failed to delete temporary file.</string>
     <string name="toast_service_terminated">Magnet Service Terminated</string>
+    <string name="toast_failed_send_file">Failed to send file</string>
 
     <string name="msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>
 
@@ -58,6 +59,16 @@
     <string name="dlg_not_valid_sdk_message">Sorry, but the SDK version is not valid for the installed Magnet Service.</string>
 
     <string name="dlg_disabled_wifi_message">Your wireless is currently disabled or you are not connected to a network. You need to enable your wireless in order to be able to share files.\n\nPress Settings to enable your wifi.</string>
+
+    <string name="dlg_nothing_to_review_title">Nothing To Review</string>
+    <string name="dlg_nothing_to_review_message">There is nothing to review.\n\nTake a shot at someone to review your shot and claim your hit.</string>
+
+    <string name="dlg_nothing_to_confirm_title">Nothing To Confirm</string>
+    <string name="dlg_nothing_to_confirm_message">There is nothing to confirm yet.\n\nYou need to wait until a player has fired a shot against another player that is not you.</string>
+
+    <string name="dlg_are_you_sure">Are you sure you want to leave the game?\n\nYou will lose all your points.</string>
+
+    <string name="dlg_no_one_else_title">No one else has joined the game yet.\n\nYou should go recruit others to play with you.</string>
 
     <string name="crop_option_error_message">No available crop option.</string>
     <string name="crop_option_choose_title">Choose Crop Option</string>
@@ -81,5 +92,12 @@
     <string name="review_lbl_txt">Review Hit:</string>
     <string name="hint_labl_txt">Scroll through list and match the player:</string>
     <string name="hint_labl2_txt">Click on the player to \'Hit\' them</string>
+
+    <string name="menu_players">Players</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_profile">Profile</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_leave">Leave</string>
+    <string name="menu_rejoin">Join</string>
 
 </resources>

@@ -25,10 +25,41 @@
             android:layout_below="@id/review_label"
             android:layout_centerHorizontal="true"
             android:src="@drawable/missing_profile"
-            android:onClick="true"
+            android:onClick="picturePressed"
             android:focusable="true"
             android:clickable="true"
             android:layout_margin="5dp"/>
+
+    <ImageButton android:id="@+id/previous_button"
+                 android:layout_width="wrap_content"
+                 android:layout_height="160dp"
+                 android:src="@drawable/left_button"
+                 android:background="@null"
+                 android:onClick="previousPressed"
+                 android:visibility="invisible"
+                 android:layout_below="@id/review_label"
+                 android:layout_toLeftOf="@id/review_picture" />
+
+    <ImageButton android:id="@+id/next_button"
+                 android:layout_width="wrap_content"
+                 android:layout_height="160dp"
+                 android:src="@drawable/right_button"
+                 android:background="@null"
+                 android:onClick="nextPressed"
+                 android:visibility="invisible"
+                 android:layout_below="@id/review_label"
+                 android:layout_toRightOf="@id/review_picture" />
+
+    <ImageView
+            android:id="@+id/check_mark"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_alignBottom="@id/review_picture"
+            android:layout_alignRight="@id/review_picture"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/check_mark"
+            android:visibility="invisible"
+            android:layout_margin="2dp"/>
 
     <TextView
             android:id="@+id/hint_label"

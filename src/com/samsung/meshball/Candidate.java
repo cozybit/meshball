@@ -1,21 +1,31 @@
 package com.samsung.meshball;
 
+import android.graphics.Bitmap;
+import com.samsung.meshball.utils.MediaManager;
+
+import java.io.File;
+import java.io.IOException;
+
 /**
  * This class ...
  */
 public class Candidate
 {
     private String playerID;
+    private File path;
     private String fileName;
+    private String shooterID;
 
-    public Candidate(String playerID, String fileName)
+    public Candidate(String playerID, File path, String fileName)
     {
         this.playerID = playerID;
+        this.path = path;
         this.fileName = fileName;
     }
 
-    public Candidate(String fileName)
+    public Candidate(File path, String fileName)
     {
+        this.path = path;
         this.fileName = fileName;
     }
 
@@ -27,6 +37,27 @@ public class Candidate
     public String getFileName()
     {
         return fileName;
+    }
+
+    public File getPath()
+    {
+        return path;
+    }
+
+    public Bitmap getBitmap()
+            throws IOException
+    {
+        return MediaManager.loadBitmapImage( fileName );
+    }
+
+    public void setPlayerID(String playerID)
+    {
+        this.playerID = playerID;
+    }
+
+    public void setShooterID(String shooterID)
+    {
+        this.shooterID = shooterID;
     }
 
     @Override

@@ -15,13 +15,13 @@ public class Player
     private Bitmap picture;
     private String hitBy;
     private String reviewedBy;
+    private String nodeID;
     private int shots = 0;
+    private boolean playing = true;
 
-    public Player(String playerID, String screenName, Bitmap picture)
+    public Player(String playerID)
     {
         this.playerID = playerID;
-        this.screenName = screenName;
-        this.picture = picture;
     }
 
     public String getPlayerID()
@@ -79,6 +79,26 @@ public class Player
         this.shots = shots;
     }
 
+    public boolean isPlaying()
+    {
+        return playing;
+    }
+
+    public void setIsPlaying(boolean playing)
+    {
+        this.playing = playing;
+    }
+
+    public String getNodeID()
+    {
+        return nodeID;
+    }
+
+    public void setNodeID(String nodeID)
+    {
+        this.nodeID = nodeID;
+    }
+
     @Override
     public boolean equals(Object o)
     {
@@ -104,11 +124,12 @@ public class Player
     public String toString()
     {
         return "Player{" +
-                "playerID=" + playerID +
+                "playerID='" + playerID + '\'' +
                 ", screenName='" + screenName + '\'' +
+                ", playing=" + playing +
                 ", shots=" + shots +
-                ", hitBy='" + hitBy + '\'' +
                 ", reviewedBy='" + reviewedBy + '\'' +
+                ", hitBy='" + hitBy + '\'' +
                 '}';
     }
 }

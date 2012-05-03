@@ -5,15 +5,17 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.channels.FileChannel;
 
 /**
  * This class ...
  */
 public class Utils
 {
+    private static final String TAG = Utils.class.getName();
+
     public static String getMethodName()
     {
         return Thread.currentThread().getStackTrace()[2].getMethodName();
@@ -60,6 +62,33 @@ public class Utils
 
     public static boolean checkCameraHardware(Context context) {
         return context.getPackageManager().hasSystemFeature( PackageManager.FEATURE_CAMERA );
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void copyFile(File sourceFile, File destFile) throws IOException
+    {
+        Log.i( TAG, "sourceFile = %s, destFile = %s", sourceFile, destFile );
+
+        if(!destFile.exists()) {
+            destFile.createNewFile();
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        }
+        finally {
+            if(source != null) {
+                source.close();
+            }
+            if(destination != null) {
+                destination.close();
+            }
+        }
     }
 
 

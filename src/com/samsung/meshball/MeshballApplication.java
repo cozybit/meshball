@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.WifiUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -42,7 +44,9 @@ public class MeshballApplication extends Application
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
     private boolean isReady = false;
-    private boolean inPlay = false;
+    private boolean playing = true;
+    private boolean reviewing = false;
+    private Handler handler = new Handler();
 
     private Bitmap tempProfileImage;
     private Bitmap profileImage;
@@ -56,6 +60,7 @@ public class MeshballApplication extends Application
 
     private Map<String, Player> playersMap = new HashMap<String, Player>();
     private List<Player> players = new ArrayList<Player>();
+    private Map<String, Player> nodeMap = new HashMap<String, Player>();
 
     private Random dice = new Random( System.currentTimeMillis() );
     private List<Drawable> splatters = new ArrayList<Drawable>();
@@ -65,10 +70,45 @@ public class MeshballApplication extends Application
     private Timer timer = new  Timer();
 
     private TimerTask timerTask = new TimerTask() {
+
         @Override
         public void run()
         {
+            if ( ! reviewing ) {
+                Iterator<Candidate> it = reviewList.iterator();
+                while ( it.hasNext() ) {
+                    Candidate candidate = it.next();
+                    if ( candidate.getPlayerID() != null ) {
 
+                        // Let's rename our file to include the player's ID who we claim to have hit...
+                        StringBuilder newName = new StringBuilder();
+                        newName.append( candidate.getPlayerID() );
+                        newName.append(  "." );
+                        newName.append( getPlayerID() );
+                        newName.append( ".JPG" );
+
+                        File from = new File( candidate.getPath(), candidate.getFileName() );
+                        File to = new File(  candidate.getPath(), newName.toString() );
+
+                        if ( ! from.renameTo( to ) ) {
+                            Log.e( TAG, "Failed to rename %s to %s", from, to );
+                        }
+                        else {
+                            magnet.shareFile( null, CHANNEL, null, to.getAbsolutePath(), newName.toString(), new MagnetAgent.MagnetListener()
+                            {
+                                @Override
+                                public void onFailure(int reason)
+                                {
+                                    Log.e( TAG, "FAILED to send file: reason = %d", reason );
+                                    Toast.makeText( getApplicationContext(), R.string.toast_failed_send_file, Toast.LENGTH_LONG ).show();
+                                }
+                            });
+                        }
+
+                        it.remove();
+                    }
+                }
+            }
         }
     };
 
@@ -113,7 +153,9 @@ public class MeshballApplication extends Application
             handleWifiConnect();
 
             Log.i(TAG, "Attempting to join: %s", CHANNEL);
-            magnet.joinChannel( CHANNEL, channelListener );
+            if ( playing ) {
+                joinGame();
+            }
         }
 
         @Override
@@ -145,9 +187,7 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-
-                // Broadcast our identity on the channel
-
+                // A join event will trigger a broadcast/shout out
                 broadcastIdentity();
             }
         }
@@ -157,7 +197,20 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
+                Player player = nodeMap.get( fromNode );
+                if ( player == null ) {
+                    Log.e( TAG, "GOT NULL PLAYER BACK!  fromNode = %s", fromNode );
+                    return;
+                }
 
+                // Remove them from the game...
+                Log.i( TAG, "Removing player %s from game...", player );
+
+                nodeMap.remove( fromNode );
+                playersMap.remove( player.getPlayerID() );
+                players.remove( player );
+
+                Toast.makeText( meshballActivity, getString( R.string.has_left, player.getScreenName()), Toast.LENGTH_LONG ).show();
             }
         }
 
@@ -166,21 +219,43 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-                if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 3) ) {
-                    Player player = playersMap.get( fromNode );
+                if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 4) ) {
+                    String playerID = new String( payload.get(0) );
+                    String name = new String(payload.get(1));
+
+                    // Since node IDs can not be relied on to be stable, we will use a player ID that is
+                    // generated from the devices telephony details.  Each player generates and publishes their
+                    // player ID.
+                    //
+                    // See getPlayerID()/setPlayerID().
+
+                    Player player = playersMap.get( playerID );
                     if ( player == null ) {
-
-                        String playerID = new String(payload.get(0));
-                        String screenName = new String(payload.get(1));
-
-                        Log.i( TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode );
-
-                        byte[] bytes = payload.get(2);
-                        Bitmap picture = BitmapFactory.decodeByteArray( bytes, 0, bytes.length );
-
-                        player = new Player( playerID, screenName, picture );
+                        player = new Player( playerID );
                         addPlayer( player );
+
+                        Toast.makeText( meshballActivity, getString( R.string.has_joined, name), Toast.LENGTH_LONG ).show();
                     }
+
+                    player.setScreenName( name );
+
+                    byte[] flag = payload.get(2);
+                    player.setIsPlaying( flag[0] == 1 );
+
+                    Log.i( TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode );
+
+                    byte[] bytes = payload.get(3);
+                    player.setPicture( BitmapFactory.decodeByteArray( bytes, 0, bytes.length ) );
+
+                    // Let's still make a mapping with the node ID
+
+                    nodeMap.put( fromNode, player );
+
+                    // TODO: DEBUGGING!!!  Not 100% the fromNode doesnt change on us...
+                    if ( (player.getNodeID() != null) && ! player.getNodeID().equals(fromNode) ) {
+                        Log.e( TAG, "ERROR: Got a different fromNode for Player ID %s.  Expected %s but got %s", playerID, player.getNodeID(), fromNode);
+                    }
+                    player.setNodeID( fromNode );
                 }
             }
         }
@@ -191,7 +266,7 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-
+                magnet.acceptFile( coreTransactionId );
             }
         }
 
@@ -201,7 +276,7 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-
+                 //
             }
         }
 
@@ -211,7 +286,44 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
+                // Place it in the confirm queue and decode the shooter
 
+                String[] parts = originalName.split( "." );
+                if ( parts.length != 3 ) {
+                    Log.e( TAG, "Invalid filename format! Expected 3 parts but got: %s", originalName );
+                }
+                else {
+                    String playerID = parts[0];
+                    String shooterID = parts[1];
+
+                    Player player = playersMap.get( playerID );
+                    Player shooter = playersMap.get( shooterID );
+
+                    if ( (player == null) || (shooter == null) ) {
+                        // Perhaps they left already?
+                        Log.w( TAG, "Failed to lookup hit player (%s) or shooter (%s) - filename: %s",
+                               playerID, shooterID, originalName );
+                    }
+                    else {
+                        Log.d( TAG, "[%s, %s] claims to have hit [%s, %s]", shooterID, shooter.getScreenName(), playerID, player.getScreenName() );
+
+                        File path = new File( tmp_path );
+                        Candidate candidate = new Candidate( path, originalName );
+                        candidate.setPlayerID( playerID );
+                        candidate.setShooterID( shooterID );
+
+                        confirmList.add(candidate);
+
+                        // Need to notify the activity
+                        handler.post( new Runnable() {
+                            @Override
+                            public void run()
+                            {
+                                meshballActivity.updateHUD();
+                            }
+                        } );
+                    }
+                }
             }
         }
 
@@ -242,10 +354,10 @@ public class MeshballApplication extends Application
                 Log.d( TAG, "=======================================================" );
 
                 for( String nodeID : connectedList ) {
-                    Player player = playersMap.get( nodeID );
-                    Log.d( TAG, "   %s : %s", nodeID, player );
+                    Log.d( TAG, "   %s - %s", nodeID, nodeMap.get( nodeID ) );
                 }
 
+                // Use this trigger our broadcast/shout out of ourselves!!!
                 broadcastIdentity();
             }
         }
@@ -272,11 +384,13 @@ public class MeshballApplication extends Application
 
         // Add some players
 
-        for ( int i = 0; i < 10; i++ ) {
-            Drawable d = getResources().getDrawable( R.drawable.missing_profile );
-            Player player = new Player( String.valueOf( i ), "Player #" + i, ((BitmapDrawable) d).getBitmap() );
-            addPlayer(player);
-        }
+//        for ( int i = 0; i < 10; i++ ) {
+//            Drawable d = getResources().getDrawable( R.drawable.missing_profile );
+//            Player player = new Player( String.valueOf( i ) );
+//            player.setScreenName( "Player #" + i );
+//            player.setPicture( ((BitmapDrawable) d).getBitmap() );
+//            addPlayer(player);
+//        }
 
         splatters.add( getResources().getDrawable( R.drawable.splat_01 ) );
         splatters.add( getResources().getDrawable( R.drawable.splat_02 ) );
@@ -335,6 +449,19 @@ public class MeshballApplication extends Application
         Player player = playersMap.get( playerID );
         players.remove( player );
         playersMap.remove( playerID );
+    }
+
+    public int findPlayer(String playerID)
+    {
+        int pos;
+        for ( pos = 0; pos < players.size(); pos++ ) {
+            Player player = players.get(pos);
+            if ( player.getPlayerID().equals( playerID ) ) {
+                return pos;
+            }
+        }
+
+        return 0;
     }
 
     public List<Candidate> getConfirmList()
@@ -432,6 +559,26 @@ public class MeshballApplication extends Application
     public void setFirstTime(boolean firstTime)
     {
         this.firstTime = firstTime;
+    }
+
+    public boolean isPlaying()
+    {
+        return playing;
+    }
+
+    public void setPlaying(boolean playing)
+    {
+        this.playing = playing;
+    }
+
+    public boolean isReviewing()
+    {
+        return reviewing;
+    }
+
+    public void setReviewing(boolean reviewing)
+    {
+        this.reviewing = reviewing;
     }
 
     public int getScore()
@@ -555,6 +702,7 @@ public class MeshballApplication extends Application
 
         payload.add( getPlayerID().getBytes() );
         payload.add( screenName.getBytes() );
+        payload.add( (playing ? new byte[] {1} : new byte[] {0}) );
         payload.add( bos.toByteArray() );
 
         magnet.sendData( null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
@@ -584,5 +732,23 @@ public class MeshballApplication extends Application
     public WifiUtils getWifiUtils()
     {
         return wifiUtils;
+    }
+
+    public void joinGame()
+    {
+        magnet.joinChannel( CHANNEL, channelListener );
+        playing = true;
+    }
+
+    public void leaveGame()
+    {
+        reviewList.clear();
+        confirmList.clear();
+
+        score = 0;
+        meshballActivity.updateHUD();
+
+        magnet.leaveChannel( CHANNEL );
+        playing = false;
     }
 }

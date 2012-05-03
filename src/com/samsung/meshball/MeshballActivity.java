@@ -113,7 +113,9 @@ public class MeshballActivity extends Activity
                     name.append(".JPG");
 
                     MediaManager.saveBitmapImage(mutableBitmap, name.toString(), 100);
-                    app.getConfirmList().add(new Candidate(name.toString()));
+                    app.getReviewList().add(new Candidate(MediaManager.getMediaStoragePath(), name.toString()));
+
+                    updateHUD();
                 }
                 catch (FileNotFoundException e) {
                     Log.e(TAG, e, "Caught exception while writing profile image: %s", e.getMessage());
@@ -296,13 +298,25 @@ public class MeshballActivity extends Activity
 
         camera.startPreview();
 
-        MeshballApplication app = (MeshballApplication) getApplication();
-
-        reviewLabel.setText( String.valueOf( app.getReviewList().size() ) );
-        confirmLabel.setText( String.valueOf( app.getConfirmList().size() ) );
-        scoreLabel.setText( getString( R.string.score_lbl_txt, app.getScore() ) );
+        updateHUD();
 
         inactivityTimer.onResume();
+    }
+
+    public void updateHUD()
+    {
+        MeshballApplication app = (MeshballApplication) getApplication();
+
+        int rcnt = 0;
+        for ( Candidate candidate : app.getReviewList() ) {
+            if ( candidate.getPlayerID() == null ) {
+                rcnt++;
+            }
+        }
+        reviewLabel.setText(String.valueOf(rcnt));
+
+        confirmLabel.setText(String.valueOf(app.getConfirmList().size()));
+        scoreLabel.setText(getString(R.string.score_lbl_txt, app.getScore()));
     }
 
     @Override
@@ -348,29 +362,45 @@ public class MeshballActivity extends Activity
     @Override
     public void onConfigurationChanged(Configuration newConfig)
     {
-        Log.mark( TAG );
-        super.onConfigurationChanged( newConfig );
+        Log.mark(TAG);
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
-        menu.add(Menu.NONE, R.id.menu_players, 0, "Players")
+        menu.add(Menu.NONE, R.id.menu_players, 0, R.string.menu_players)
                 .setIcon(R.drawable.icon_action_players)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-        menu.add(Menu.NONE, R.id.menu_share, 1, "Share")
+        menu.add(Menu.NONE, R.id.menu_share, 1, R.string.menu_share)
                 .setIcon( R.drawable.icon_action_share )
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS );
 
-        menu.add(Menu.NONE, R.id.menu_profile, 2, "Profile")
-                .setIcon(R.drawable.icon_profile)
+        menu.add(Menu.NONE, R.id.menu_profile, 2, R.string.menu_profile)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
-        menu.add(Menu.NONE, R.id.menu_settings, 3, "Settings")
-                .setIcon(R.drawable.icon_settings)
+        menu.add(Menu.NONE, R.id.menu_settings, 3, R.string.menu_settings)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
+        menu.add(Menu.NONE, R.id.menu_leave_rejoin, 4, R.string.menu_leave)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu)
+    {
+        MeshballApplication app = (MeshballApplication) getApplication();
+
+        MenuItem item = menu.getItem( 4 );
+        if ( app.isPlaying() ) {
+            item.setTitle( R.string.menu_leave );
+        }
+        else {
+            item.setTitle( R.string.menu_rejoin );
+        }
         return true;
     }
 
@@ -400,27 +430,33 @@ public class MeshballActivity extends Activity
                 startActivity(intent);
                 return true;
 
+            case R.id.menu_leave_rejoin:
+                MeshballApplication app = (MeshballApplication) getApplication();
+                if ( app.isPlaying() ) {
+                    displayReallyLeaveDialog();
+                }
+                else {
+                    // Join the game
+                    app.joinGame();
+                    fireButton.setAlpha( 1.0f );
+                }
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void displayFrameworkBugMessageAndExit()
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder( this );
-        builder.setTitle( getString( R.string.app_name ) );
-        builder.setMessage( getString( R.string.msg_camera_framework_bug ) );
-        builder.setPositiveButton( R.string.okay, new FinishListener( this ) );
-        builder.setOnCancelListener( new FinishListener( this ) );
-        builder.show();
-    }
-
     public void fireShot()
     {
-        Log.d( TAG, "FIRE!!!" );
+        MeshballApplication app = (MeshballApplication) getApplication();
+        if ( ! app.isPlaying() ) {
+            return;
+        }
+
+        Log.d(TAG, "FIRE!!!");
 
         inShot = true;
-        MeshballApplication app = (MeshballApplication) getApplication();
 
         // First draw a paint splatter and add some randomness in its position.
 
@@ -450,17 +486,45 @@ public class MeshballActivity extends Activity
     }
 
     @SuppressWarnings("UnusedParameters")
-    public void hitsPressed(View v)
+    public void reviewPressed(View v)
     {
+        MeshballApplication app = (MeshballApplication) getApplication();
+        if ( app.getReviewList().size() == 0 ) {
+            displayDialog(R.string.dlg_nothing_to_review_title, R.string.dlg_nothing_to_review_message);
+            return;
+        }
         Intent intent = new Intent(this, ReviewHitActivity.class);
         startActivity(intent);
     }
 
     @SuppressWarnings("UnusedParameters")
-    public void reviewPressed(View v)
+    public void confirmPressed(View v)
     {
+        MeshballApplication app = (MeshballApplication) getApplication();
+        if ( app.getConfirmList().size() == 0 ) {
+            displayDialog(R.string.dlg_nothing_to_confirm_title, R.string.dlg_nothing_to_confirm_message);
+            return;
+        }
         Intent intent = new Intent(this, ConfirmHitActivity.class);
         startActivity(intent);
+    }
+
+    private void displayDialog(int titleID, int messageID)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(messageID)
+                .setTitle(titleID)
+                .setPositiveButton( R.string.okay, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i)
+                    {
+                        //
+                    }
+                })
+                .setCancelable(true);
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     public void displayFriendlyWifiDialog()
@@ -499,6 +563,47 @@ public class MeshballActivity extends Activity
                 .setNegativeButton(R.string.no, listener);
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    public void displayReallyLeaveDialog()
+    {
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which)
+            {
+                switch(which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        // Refresh the lists
+                        MeshballApplication app = (MeshballApplication) getApplication();
+                        app.leaveGame();
+                        fireButton.setAlpha( .07f );
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        break;
+                }
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.dlg_are_you_sure)
+                .setTitle(R.string.leave)
+                .setCancelable(false)
+                .setPositiveButton(R.string.yes, listener)
+                .setNegativeButton(R.string.no, listener);
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void displayFrameworkBugMessageAndExit()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder( this );
+        builder.setTitle( getString( R.string.app_name ) );
+        builder.setMessage( getString( R.string.msg_camera_framework_bug ) );
+        builder.setPositiveButton( R.string.okay, new FinishListener( this ) );
+        builder.setOnCancelListener( new FinishListener( this ) );
+        builder.show();
     }
 
     public Rect getFramingRect()
