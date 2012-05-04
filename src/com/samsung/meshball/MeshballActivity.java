@@ -36,7 +36,7 @@ public class MeshballActivity extends Activity
     private static final int MAX_FRAME_HEIGHT = 400;
 
     private CameraConfigurationManager configManager;
-    private Camera camera;
+    private CameraPreview cameraPreview;
     private FrameLayout preview;
     private Rect framingRect;
 
@@ -49,6 +49,7 @@ public class MeshballActivity extends Activity
     private TextView scoreLabel;
     private TextView reviewLabel;
     private TextView confirmLabel;
+    private TextView hitMessageLabel;
     private ViewfinderView viewFinder;
     private boolean fromCreate;
     private Handler handler;
@@ -108,7 +109,7 @@ public class MeshballActivity extends Activity
 
                     StringBuilder name = new StringBuilder();
                     name.append(app.getPlayerID());
-                    name.append("-");
+                    name.append(".");
                     name.append(shotCounter++);
                     name.append(".JPG");
 
@@ -211,6 +212,8 @@ public class MeshballActivity extends Activity
         reviewLabel = (TextView) findViewById( R.id.review_counter );
         confirmLabel = (TextView) findViewById( R.id.confirm_counter );
 
+        hitMessageLabel = (TextView) findViewById( R.id.hit_message );
+
         viewFinder = (ViewfinderView) findViewById( R.id.viewfinder_view );
         viewFinder.setMeshballActivity( this );
 
@@ -284,19 +287,18 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onResume();
 
-        preview.removeAllViews();
-
-        camera = getCameraInstance();
+        Camera camera = getCameraInstance();
 
         if ( ! configManager.isInitialized() ) {
             configManager.initFromCameraParameters(camera);
         }
         configManager.setDesiredCameraParameters( camera );
 
-        CameraPreview cameraPreview = new CameraPreview(this, camera);
+        preview.removeAllViews();
+        cameraPreview = new CameraPreview(this, camera);
         preview.addView(cameraPreview, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) );
 
-        camera.startPreview();
+        cameraPreview.startPreview();
 
         updateHUD();
 
@@ -332,9 +334,8 @@ public class MeshballActivity extends Activity
 
     private void releaseCamera()
     {
-        if ( camera != null ) {
-            camera.release();
-            camera = null;
+        if ( cameraPreview != null ) {
+            cameraPreview.releaseCamera();
         }
     }
 
@@ -463,26 +464,33 @@ public class MeshballActivity extends Activity
         Drawable drawable = app.getRandomSplatter();
         splatter = ((BitmapDrawable) drawable).getBitmap();
 
-        camera.startPreview();
+        if ( cameraPreview != null ) {
+            cameraPreview.startPreview();
 
-        Camera.Parameters p = camera.getParameters();
-        List<String> focusModes = p.getSupportedFocusModes();
+            Camera camera = cameraPreview.getCamera();
+            if ( camera != null ) {
+                Camera.Parameters p = camera.getParameters();
+                List<String> focusModes = p.getSupportedFocusModes();
 
-        if( (focusModes != null) && focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO) ) {
-            //Phone supports autofocus! Focus first, then take picture
-            camera.autoFocus( autoFocusCallback );
-        }
-        else {
-            //Phone does not support autofocus! Just take the picture
-            Log.d( TAG, "PHONE DOES NOT SUPPORT AUTOFOCUS" );
-            camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+                if( (focusModes != null) && focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO) ) {
+                    //Phone supports autofocus! Focus first, then take picture
+                    camera.autoFocus( autoFocusCallback );
+                }
+                else {
+                    //Phone does not support autofocus! Just take the picture
+                    Log.d( TAG, "PHONE DOES NOT SUPPORT AUTOFOCUS" );
+                    camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+                }
+            }
         }
     }
 
     public void clearShot()
     {
         viewFinder.clearSplatter();
-        camera.startPreview();
+        if ( cameraPreview != null ) {
+            cameraPreview.startPreview();
+        }
     }
 
     @SuppressWarnings("UnusedParameters")
@@ -610,10 +618,11 @@ public class MeshballActivity extends Activity
     {
         if ( framingRect == null )
         {
-            if ( camera == null )
+            if ( (cameraPreview == null) || (cameraPreview.getCamera() == null) )
             {
                 return null;
             }
+
             Point screenResolution = configManager.getScreenResolution();
             int width = screenResolution.x * 3 / 4;
             if ( width < MIN_FRAME_WIDTH )
@@ -655,5 +664,16 @@ public class MeshballActivity extends Activity
             Log.d( TAG, "Calculated framing rect: %s", framingRect );
         }
         return framingRect;
+    }
+
+    public void hideHitMessage()
+    {
+        hitMessageLabel.setVisibility( View.INVISIBLE );
+    }
+
+    public void setHitMessage( String message )
+    {
+        hitMessageLabel.setText( message );
+        hitMessageLabel.setVisibility( View.VISIBLE );
     }
 }

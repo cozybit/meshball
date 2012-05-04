@@ -18,6 +18,7 @@ public class Player
     private String nodeID;
     private int shots = 0;
     private boolean playing = true;
+    private boolean me = false;
 
     public Player(String playerID)
     {
@@ -87,6 +88,16 @@ public class Player
     public void setIsPlaying(boolean playing)
     {
         this.playing = playing;
+    }
+
+    public boolean isMe()
+    {
+        return me;
+    }
+
+    public void setIsMe(boolean me)
+    {
+        this.me = me;
     }
 
     public String getNodeID()

@@ -57,7 +57,7 @@
             android:layout_alignBottom="@id/review_picture"
             android:layout_alignRight="@id/review_picture"
             android:layout_centerHorizontal="true"
-            android:src="@drawable/check_mark"
+            android:src="@drawable/check_mark_md"
             android:visibility="invisible"
             android:layout_margin="2dp"/>
 

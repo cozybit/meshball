@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:id="@+id/main_frame"
              android:layout_width="fill_parent"
-             android:layout_height="fill_parent">
+             android:layout_height="fill_parent"
+             android:background="@color/solid_black">
 
     <FrameLayout android:id="@+id/preview_view"
                  android:layout_width="fill_parent"
@@ -79,6 +80,17 @@
                   android:textSize="20sp"
                   android:text="@string/confirm_counter_txt"/>
     </LinearLayout>
+
+    <TextView android:id="@+id/hit_message"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="top|center"
+              android:layout_marginTop="50dp"
+              android:visibility="invisible"
+              android:textSize="14sp"
+              android:textStyle="bold"
+              android:text="@string/hit_message"
+              android:textColor="@color/warning_color"/>
 
     <ImageButton android:id="@+id/fire_button"
                  android:layout_width="wrap_content"

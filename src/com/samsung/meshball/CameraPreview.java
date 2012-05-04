@@ -18,7 +18,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 {
     private static final String TAG = CameraPreview.class.getName();
 
-    private SurfaceHolder holder;
     private Camera camera;
 
     public CameraPreview(Context context, Camera camera)
@@ -26,16 +25,23 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         super(context);
         this.camera = camera;
 
-        holder = getHolder();
+        SurfaceHolder holder = getHolder();
         holder.addCallback(this);
+    }
+
+    public Camera getCamera()
+    {
+        return camera;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
         try {
-            camera.setPreviewDisplay(holder);
-            camera.startPreview();
+            if ( camera != null ) {
+                camera.setPreviewDisplay(holder);
+                camera.startPreview();
+            }
         }
         catch (IOException e) {
             Log.d(TAG, e, "Error setting camera preview: ", e.getMessage());
@@ -45,7 +51,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
     {
-        if ( holder == null ) {
+        if ( (holder == null) || (camera == null) ) {
             return;
         }
 
@@ -69,5 +75,32 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceDestroyed(SurfaceHolder holder)
     {
         // Empty - Release the camera preview in the main activity
+    }
+
+    public void startPreview()
+    {
+        if ( camera != null ) {
+            camera.startPreview();
+        }
+    }
+
+    public void stopPreview()
+    {
+        if ( camera != null ) {
+            try {
+                camera.stopPreview();
+            }
+            catch ( Exception e ) {
+                // Ignore.  Tried to stop a non-existent preview
+            }
+        }
+    }
+
+    public void releaseCamera()
+    {
+        if ( camera != null ) {
+            camera.release();
+            camera = null;
+        }
     }
 }

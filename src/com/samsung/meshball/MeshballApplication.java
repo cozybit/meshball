@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -19,12 +20,10 @@ import com.samsung.magnet.wrapper.MagnetAgent;
 import com.samsung.magnet.wrapper.MagnetAgentImpl;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
+import com.samsung.meshball.utils.Utils;
 import com.samsung.meshball.utils.WifiUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -40,6 +39,7 @@ public class MeshballApplication extends Application
 
     public static final String CHANNEL = "com.samsung.meshball";
     public static final String IDENTITY_TYPE = "com.samsung.meshball/identity";
+    public static final String CONFIRMED_HIT_TYPE = "com.samsung.meshball/confirmed_hit";
 
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
@@ -50,10 +50,12 @@ public class MeshballApplication extends Application
 
     private Bitmap tempProfileImage;
     private Bitmap profileImage;
+    private boolean defaultImage;
     private String screenName;
     private boolean firstTime;
     private String playerID = null;
     private int score = 0;
+    private String hitMessage = "";
 
     private List<Candidate> reviewList = new ArrayList<Candidate>();
     private List<Candidate> confirmList = new ArrayList<Candidate>();
@@ -84,8 +86,7 @@ public class MeshballApplication extends Application
                         StringBuilder newName = new StringBuilder();
                         newName.append( candidate.getPlayerID() );
                         newName.append(  "." );
-                        newName.append( getPlayerID() );
-                        newName.append( ".JPG" );
+                        newName.append( candidate.getFileName() );
 
                         File from = new File( candidate.getPath(), candidate.getFileName() );
                         File to = new File(  candidate.getPath(), newName.toString() );
@@ -108,6 +109,28 @@ public class MeshballApplication extends Application
                         it.remove();
                     }
                 }
+            }
+        }
+    };
+
+    private Runnable hideHitMessage = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            if ( meshballActivity != null ) {
+                meshballActivity.hideHitMessage();
+            }
+        }
+    };
+
+    private Runnable showHitMessage = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            if ( meshballActivity != null ) {
+                meshballActivity.setHitMessage( hitMessage );
             }
         }
     };
@@ -220,42 +243,10 @@ public class MeshballApplication extends Application
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
                 if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 4) ) {
-                    String playerID = new String( payload.get(0) );
-                    String name = new String(payload.get(1));
-
-                    // Since node IDs can not be relied on to be stable, we will use a player ID that is
-                    // generated from the devices telephony details.  Each player generates and publishes their
-                    // player ID.
-                    //
-                    // See getPlayerID()/setPlayerID().
-
-                    Player player = playersMap.get( playerID );
-                    if ( player == null ) {
-                        player = new Player( playerID );
-                        addPlayer( player );
-
-                        Toast.makeText( meshballActivity, getString( R.string.has_joined, name), Toast.LENGTH_LONG ).show();
-                    }
-
-                    player.setScreenName( name );
-
-                    byte[] flag = payload.get(2);
-                    player.setIsPlaying( flag[0] == 1 );
-
-                    Log.i( TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode );
-
-                    byte[] bytes = payload.get(3);
-                    player.setPicture( BitmapFactory.decodeByteArray( bytes, 0, bytes.length ) );
-
-                    // Let's still make a mapping with the node ID
-
-                    nodeMap.put( fromNode, player );
-
-                    // TODO: DEBUGGING!!!  Not 100% the fromNode doesnt change on us...
-                    if ( (player.getNodeID() != null) && ! player.getNodeID().equals(fromNode) ) {
-                        Log.e( TAG, "ERROR: Got a different fromNode for Player ID %s.  Expected %s but got %s", playerID, player.getNodeID(), fromNode);
-                    }
-                    player.setNodeID( fromNode );
+                    handleIdentity(fromNode, payload);
+                }
+                else if ( CONFIRMED_HIT_TYPE.equals( type ) && (payload.size() == 3) ) {
+                    handleConfirmedHit(fromNode, payload);
                 }
             }
         }
@@ -288,40 +279,32 @@ public class MeshballApplication extends Application
             if ( fromChannel.equals( CHANNEL ) ) {
                 // Place it in the confirm queue and decode the shooter
 
-                String[] parts = originalName.split( "." );
-                if ( parts.length != 3 ) {
-                    Log.e( TAG, "Invalid filename format! Expected 3 parts but got: %s", originalName );
+                String[] parts = originalName.split( "\\." );
+                if ( parts.length != 4 ) {
+                    Log.e( TAG, "Invalid filename format! Expected 4 parts but got: %s", originalName );
                 }
                 else {
-                    String playerID = parts[0];
-                    String shooterID = parts[1];
+                    String pID = parts[0];
+                    String sID = parts[1];
 
-                    Player player = playersMap.get( playerID );
-                    Player shooter = playersMap.get( shooterID );
+                    Player player = playersMap.get( pID );
+                    Player shooter = playersMap.get( sID );
+
+                    // If there are more than two players, then we can not confirm ourselves
+
+                    if ( (playersMap.size() > 2) && playerID.equals( pID ) ) {
+                        Log.d( TAG, "Victim %s is our self (%s). Ignoring...", pID, getPlayerID() );
+                        return;
+                    }
 
                     if ( (player == null) || (shooter == null) ) {
                         // Perhaps they left already?
-                        Log.w( TAG, "Failed to lookup hit player (%s) or shooter (%s) - filename: %s",
-                               playerID, shooterID, originalName );
+                        Log.w( TAG, "Failed to lookup hit player (%s) or shooter (%s) - filename: %s", pID, sID, originalName);
                     }
                     else {
-                        Log.d( TAG, "[%s, %s] claims to have hit [%s, %s]", shooterID, shooter.getScreenName(), playerID, player.getScreenName() );
-
-                        File path = new File( tmp_path );
-                        Candidate candidate = new Candidate( path, originalName );
-                        candidate.setPlayerID( playerID );
-                        candidate.setShooterID( shooterID );
-
-                        confirmList.add(candidate);
-
-                        // Need to notify the activity
-                        handler.post( new Runnable() {
-                            @Override
-                            public void run()
-                            {
-                                meshballActivity.updateHUD();
-                            }
-                        } );
+                        Log.d( TAG, "[%s, %s] claims to have hit [%s, %s] : filename: %s",
+                               sID, shooter.getScreenName(), pID, player.getScreenName(), tmp_path );
+                        handleFile(originalName, tmp_path, sID, pID);
                     }
                 }
             }
@@ -344,7 +327,7 @@ public class MeshballApplication extends Application
         }
     };
 
-    private MagnetAgent.NodeListListener nodeListListener = new MagnetAgent.NodeListListener()
+   private MagnetAgent.NodeListListener nodeListListener = new MagnetAgent.NodeListListener()
     {
         @Override
         public void onResult(String channel, List<String> connectedList)
@@ -392,6 +375,17 @@ public class MeshballApplication extends Application
 //            addPlayer(player);
 //        }
 
+        loadPreferences();
+
+        if ( ! isFirstTime() ) {
+            Player me = new Player( getPlayerID() );
+            me.setScreenName( screenName );
+            me.setIsPlaying(true);
+            me.setPicture(getProfileImage());
+            me.setIsMe( true );
+            addPlayer(me);
+        }
+
         splatters.add( getResources().getDrawable( R.drawable.splat_01 ) );
         splatters.add( getResources().getDrawable( R.drawable.splat_02 ) );
         splatters.add( getResources().getDrawable( R.drawable.splat_03 ) );
@@ -406,6 +400,34 @@ public class MeshballApplication extends Application
     {
         Log.i(TAG, "Cancelling timer tasks...");
         timer.cancel();
+
+        // Cleanup all JPG and PNG files except for the profile
+        File path = MediaManager.getMediaStoragePath();
+        File[] list = path.listFiles(new FileFilter()
+        {
+            @Override
+            public boolean accept(File file)
+            {
+                if ( file.getName().equals( PROFILE_FILENAME ) ) {
+                    return false;
+                }
+
+                String parts[] = file.getName().split( "\\." );
+                if ( parts.length > 1 ) {
+                    String part = parts[parts.length - 1];
+                    if ( ".jpg".equalsIgnoreCase( part ) || ".png".equalsIgnoreCase( part ) ) {
+                        return true;
+                    }
+                }
+                return  false;
+            }
+        });
+
+        for ( File file : list ) {
+            if ( ! file.delete() ) {
+                Log.w( TAG, "Failed to delete file: %s", file );
+            }
+        }
 
         Log.mark( TAG );
         super.onTerminate();
@@ -439,7 +461,7 @@ public class MeshballApplication extends Application
     public void addPlayer(Player player)
     {
         playersMap.put( player.getPlayerID(), player );
-        if ( ! players.contains( player ) ) {
+        if ( ! players.contains( player ) && ! player.isMe()) {
             players.add( player );
         }
     }
@@ -475,10 +497,16 @@ public class MeshballApplication extends Application
         return splatters.get( which );
     }
 
+    public boolean usingDefaultImage()
+    {
+        return defaultImage;
+    }
+
     public Bitmap getProfileImage()
     {
         if (profileImage == null) {
             Bitmap image = null;
+            defaultImage = false;
             try {
                 image = MediaManager.loadBitmapImage(PROFILE_FILENAME);
             }
@@ -491,6 +519,7 @@ public class MeshballApplication extends Application
                 Resources res = getResources();
                 Drawable defaultDrawable = res.getDrawable(R.drawable.missing_profile);
                 image = ((BitmapDrawable) defaultDrawable).getBitmap();
+                defaultImage = true;
             }
 
             profileImage = image;
@@ -693,6 +722,11 @@ public class MeshballApplication extends Application
     {
         Log.mark(TAG);
 
+        if ( screenName == null ) {
+            Log.i( TAG, "Identity has not been set up yet - nothing to broadcast." );
+            return;
+        }
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         Bitmap image = getProfileImage();
@@ -729,6 +763,133 @@ public class MeshballApplication extends Application
 
     }
 
+    private void handleFile(final String originalName, final String tmp_path, final String shooterID, final String playerID)
+    {
+        final File copyFromPath = new File(tmp_path);
+        final File copyToPath = new File(MediaManager.getMediaStoragePath(), originalName);
+
+        AsyncTask<File, Void, Boolean> task = new AsyncTask<File, Void, Boolean>()
+        {
+            @Override
+            protected void onPreExecute()
+            {
+            }
+
+            @Override
+            protected Boolean doInBackground(File... files)
+            {
+                File sourceFile = files[0];
+                File destFile = files[1];
+
+                if((sourceFile == null) || (destFile == null)) {
+                    return false;
+                }
+
+                try {
+                    Utils.copyFile(sourceFile, destFile);
+                }
+                catch(IOException e) {
+                    Log.e(TAG, e, "Failed to copy file: %s", e.getMessage());
+                    e.printStackTrace();
+                    return false;
+                }
+
+                return true;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success)
+            {
+                Candidate candidate = new Candidate( MediaManager.getMediaStoragePath(), originalName );
+                candidate.setPlayerID( playerID );
+                candidate.setShooterID( shooterID );
+
+                confirmList.add(candidate);
+
+                // Need to notify the activity
+                handler.post( new Runnable() {
+                    @Override
+                    public void run()
+                    {
+                        meshballActivity.updateHUD();
+                    }
+                } );
+            }
+        };
+        task.execute(copyFromPath, copyToPath);
+    }
+
+    private void handleConfirmedHit(String fromNode, List<byte[]> payload)
+    {
+        String playerID = new String( payload.get(0) );
+        String shooterID = new String( payload.get(1) );
+        String reviewerID = new String( payload.get(2) );
+
+        Player player = playersMap.get( playerID );
+        Player shooter = playersMap.get( shooterID );
+
+        if ( (player == null) || (shooter == null) ) {
+            // One or the other left, so ignore the message
+            return;
+        }
+
+        player.setHitBy( shooterID );
+        player.setReviewedBy( reviewerID );
+
+        // Remove any pending confirmations that I might have in my queues
+        Iterator<Candidate> it = confirmList.iterator();
+        while ( it.hasNext() ) {
+            Candidate candidate = it.next();
+            if ( candidate.getPlayerID().equals( playerID ) ) {
+                it.remove();
+            }
+        }
+
+        hitMessage = getString( R.string.hit_message, shooter.getScreenName(), player.getScreenName() );
+        handler.post( showHitMessage );
+        handler.postDelayed( hideHitMessage, 2000 );
+    }
+
+    private void handleIdentity(String fromNode, List<byte[]> payload)
+    {
+        String playerID = new String( payload.get(0) );
+        String name = new String(payload.get(1));
+
+        // Since node IDs can not be relied on to be stable, we will use a player ID that is
+        // generated from the devices telephony details.  Each player generates and publishes their
+        // player ID.
+        //
+        // See getPlayerID()/setPlayerID().
+
+        Player player = playersMap.get( playerID );
+        if ( player == null ) {
+            player = new Player( playerID );
+            addPlayer( player );
+
+            Toast.makeText(meshballActivity, getString(R.string.has_joined, name), Toast.LENGTH_LONG).show();
+        }
+
+        player.setScreenName( name );
+
+        byte[] flag = payload.get(2);
+        player.setIsPlaying( flag[0] == 1 );
+
+        Log.i(TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode);
+
+        byte[] bytes = payload.get(3);
+        player.setPicture( BitmapFactory.decodeByteArray(bytes, 0, bytes.length) );
+
+        // Let's still make a mapping with the node ID
+
+        nodeMap.put( fromNode, player );
+
+        // TODO: DEBUGGING!!!  Not 100% the fromNode doesnt change on us...
+        if ( (player.getNodeID() != null) && ! player.getNodeID().equals(fromNode) ) {
+            Log.e( TAG, "ERROR: Got a different fromNode for Player ID %s.  Expected %s but got %s", playerID, player.getNodeID(), fromNode);
+        }
+        player.setNodeID( fromNode );
+    }
+
     public WifiUtils getWifiUtils()
     {
         return wifiUtils;
@@ -750,5 +911,30 @@ public class MeshballApplication extends Application
 
         magnet.leaveChannel( CHANNEL );
         playing = false;
+    }
+
+    public void confirmedHit(Candidate beingReviewed)
+    {
+        Player player = playersMap.get( beingReviewed.getPlayerID() );
+        player.setHitBy( beingReviewed.getShooterID() );
+        player.setReviewedBy( getPlayerID() );
+
+        // Broadcast the confirmed hit!
+        List<byte[]> payload = new ArrayList<byte[]>();
+
+        payload.add( beingReviewed.getPlayerID().getBytes() );
+        payload.add( beingReviewed.getShooterID().getBytes() );
+        payload.add( getPlayerID().getBytes() );
+
+        Log.d( TAG, "Broadcasting confirmed hit!" );
+
+        magnet.sendData( null, CHANNEL, CONFIRMED_HIT_TYPE, payload, new MagnetAgent.MagnetListener()
+        {
+            @Override
+            public void onFailure(int reason)
+            {
+                Log.e( TAG, "Failure broadcasting confirmed hit. Reason = %d", reason );
+            }
+        });
     }
 }

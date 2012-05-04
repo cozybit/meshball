@@ -74,12 +74,14 @@
     <string name="crop_option_choose_title">Choose Crop Option</string>
     <string name="crop_option_no_result_message">Sorry, but was unable to process image. Please pick another.</string>
 
+    <string name="hit_message" formatted="false">%s has taken out %s</string>
+
     <!-- confirm_hit.xml -->
     <string name="confirm_lbl_txt">Confirm Hit:</string>
-    <string name="hint_lbl_txt">Giraffe Master claims to have hit Foobar Fighter</string>
+    <string name="hit_lbl_txt" formatted="false">%s claims to have hit %s</string>
     <string name="confirm_hit_btn">Confirm</string>
     <string name="bad_hit_btn">Bad Shot</string>
-    
+
     <!-- grid_item.xml -->
     <string name="grid_lbl_txt">Giraffe Master</string>
     

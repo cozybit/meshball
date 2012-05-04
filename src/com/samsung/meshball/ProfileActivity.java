@@ -71,7 +71,7 @@ public class ProfileActivity
         final MeshballApplication app = (MeshballApplication) getApplication();
 
         if ( app.isFirstTime() ) {
-            pictureSet = false;
+            pictureSet = ! app.usingDefaultImage();
         }
 
         Button done = (Button) findViewById( R.id.update_button );
@@ -97,6 +97,13 @@ public class ProfileActivity
 
                     if ( app.isFirstTime() ) {
                         app.setFirstTime( false );
+
+                        Player me = new Player( app.getPlayerID() );
+                        me.setScreenName( screenName );
+                        me.setIsPlaying( true );
+                        me.setPicture( app.getProfileImage() );
+                        me.setIsMe( true );
+                        app.addPlayer( me );
                     }
 
                     app.savePreferences();

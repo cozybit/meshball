@@ -25,6 +25,7 @@ public class PlayerAdapter extends BaseAdapter
     {
         ImageView gridImage;
         TextView gridText;
+        ImageView hitImage;
     }
 
     public PlayerAdapter(Activity context)
@@ -59,6 +60,7 @@ public class PlayerAdapter extends BaseAdapter
 
             holder.gridImage = (ImageView) convertView.findViewById(R.id.grid_image);
             holder.gridText = (TextView) convertView.findViewById(R.id.grid_label);
+            holder.hitImage = (ImageView) convertView.findViewById(R.id.grid_x_mark);
 
             convertView.setTag(holder);
         }
@@ -72,6 +74,13 @@ public class PlayerAdapter extends BaseAdapter
 
         holder.gridImage.setImageBitmap(player.getPicture());
         holder.gridText.setText(player.getScreenName());
+
+        if ( player.getHitBy() != null ) {
+            holder.hitImage.setVisibility( View.VISIBLE );
+        }
+        else {
+            holder.hitImage.setVisibility( View.INVISIBLE );
+        }
 
         return convertView;
     }

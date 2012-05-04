@@ -60,6 +60,11 @@ public class Candidate
         this.shooterID = shooterID;
     }
 
+    public String getShooterID()
+    {
+        return shooterID;
+    }
+
     @Override
     public boolean equals(Object o)
     {
