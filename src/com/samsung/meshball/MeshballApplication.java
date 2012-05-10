@@ -1,9 +1,8 @@
 package com.samsung.meshball;
 
-import android.app.AlertDialog;
 import android.app.Application;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -44,6 +43,8 @@ public class MeshballApplication extends Application
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
     private boolean isReady = false;
+    private boolean noService = false;
+    private boolean noValidSDK = false;
     private boolean playing = true;
     private boolean reviewing = false;
     private Handler handler = new Handler();
@@ -55,7 +56,7 @@ public class MeshballApplication extends Application
     private boolean firstTime;
     private String playerID = null;
     private int score = 0;
-    private String hitMessage = "";
+    private String statusMessage = "";
 
     private List<Candidate> reviewList = new ArrayList<Candidate>();
     private List<Candidate> confirmList = new ArrayList<Candidate>();
@@ -113,7 +114,7 @@ public class MeshballApplication extends Application
         }
     };
 
-    private Runnable hideHitMessage = new Runnable()
+    private Runnable hideStatus = new Runnable()
     {
         @Override
         public void run()
@@ -124,13 +125,15 @@ public class MeshballApplication extends Application
         }
     };
 
-    private Runnable showHitMessage = new Runnable()
+    private Runnable showStatus = new Runnable()
     {
         @Override
         public void run()
         {
+            meshballActivity.updateHUD();
+
             if ( meshballActivity != null ) {
-                meshballActivity.setHitMessage( hitMessage );
+                meshballActivity.setHitMessage(statusMessage);
             }
         }
     };
@@ -140,33 +143,22 @@ public class MeshballApplication extends Application
         @Override
         public void onServiceNotFound()
         {
-            Log.mark( TAG );
-
-            String title = getString(R.string.dlg_noservice_title);
-            String message = getString(R.string.dlg_noservice_message);
-
-            displayDialog(title, message);
+            Log.mark(TAG);
+            noService = true;
         }
 
         @Override
         public void onServiceTerminated()
         {
             Log.mark( TAG );
-
-            Toast.makeText(getApplicationContext(),
-                           getString(R.string.toast_service_terminated),
-                           Toast.LENGTH_LONG).show();
+            isReady = false;
         }
 
         @Override
         public void onInvalidSdk()
         {
             Log.mark( TAG );
-
-            String title = getString(R.string.dlg_not_valid_sdk_title);
-            String message = getString(R.string.dlg_not_valid_sdk_message);
-
-            displayDialog(title, message);
+            noValidSDK = true;
         }
 
         @Override
@@ -233,7 +225,19 @@ public class MeshballApplication extends Application
                 playersMap.remove( player.getPlayerID() );
                 players.remove( player );
 
-                Toast.makeText( meshballActivity, getString( R.string.has_left, player.getScreenName()), Toast.LENGTH_LONG ).show();
+                // Also from the confirm list...
+                Iterator<Candidate> it = confirmList.iterator();
+                while( it.hasNext() ) {
+                    Candidate candidate = it.next();
+                    if ( candidate.getPlayerID().equals( player.getPlayerID() ) ) {
+                        it.remove();
+                    }
+                }
+
+                statusMessage = getString( R.string.has_left, player.getScreenName());
+
+                handler.post(showStatus);
+                handler.postDelayed(hideStatus, 3000 );
             }
         }
 
@@ -376,15 +380,6 @@ public class MeshballApplication extends Application
 //        }
 
         loadPreferences();
-
-        if ( ! isFirstTime() ) {
-            Player me = new Player( getPlayerID() );
-            me.setScreenName( screenName );
-            me.setIsPlaying(true);
-            me.setPicture(getProfileImage());
-            me.setIsMe( true );
-            addPlayer(me);
-        }
 
         splatters.add( getResources().getDrawable( R.drawable.splat_01 ) );
         splatters.add( getResources().getDrawable( R.drawable.splat_02 ) );
@@ -590,6 +585,16 @@ public class MeshballApplication extends Application
         this.firstTime = firstTime;
     }
 
+    public boolean hasNoService()
+    {
+        return noService;
+    }
+
+    public boolean hasNoValidSDK()
+    {
+        return noValidSDK;
+    }
+
     public boolean isPlaying()
     {
         return playing;
@@ -701,23 +706,6 @@ public class MeshballApplication extends Application
         Log.i(TAG, "Player ID = %s [UNIQUE ID: %s]", playerID, id);
     }
 
-    private void displayDialog(String title, String message)
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder(meshballActivity);
-        builder.setMessage(message)
-                .setTitle(title)
-                .setPositiveButton(R.string.okay, new DialogInterface.OnClickListener()
-                {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i)
-                    {
-                        //
-                    }
-                });
-
-        builder.show();
-    }
-
     public void broadcastIdentity()
     {
         Log.mark(TAG);
@@ -821,11 +809,11 @@ public class MeshballApplication extends Application
 
     private void handleConfirmedHit(String fromNode, List<byte[]> payload)
     {
-        String playerID = new String( payload.get(0) );
+        String hitID = new String( payload.get(0) );
         String shooterID = new String( payload.get(1) );
         String reviewerID = new String( payload.get(2) );
 
-        Player player = playersMap.get( playerID );
+        Player player = playersMap.get( hitID );
         Player shooter = playersMap.get( shooterID );
 
         if ( (player == null) || (shooter == null) ) {
@@ -840,14 +828,33 @@ public class MeshballApplication extends Application
         Iterator<Candidate> it = confirmList.iterator();
         while ( it.hasNext() ) {
             Candidate candidate = it.next();
-            if ( candidate.getPlayerID().equals( playerID ) ) {
+            if ( candidate.getPlayerID().equals( hitID ) ) {
                 it.remove();
             }
         }
 
-        hitMessage = getString( R.string.hit_message, shooter.getScreenName(), player.getScreenName() );
-        handler.post( showHitMessage );
-        handler.postDelayed( hideHitMessage, 2000 );
+        // TODO: Add interval tree clock to resolve multiple claims on the hit!!!
+
+        // Do I get the credit for the hit?
+        if ( shooterID.equals( getPlayerID() ) ) {
+            statusMessage = getString( R.string.hit_message_credit, player.getScreenName() );
+            score++;
+        }
+        else {
+            // Was it me who was hit?
+            if ( hitID.equals( getPlayerID() ) ) {
+                leaveGame();
+                Intent intent = new Intent( meshballActivity, GameOverActivity.class );
+                intent.putExtra( "screen_name", shooter.getScreenName() );
+                meshballActivity.startActivity( intent );
+            }
+            else {
+                statusMessage = getString( R.string.hit_message, shooter.getScreenName(), player.getScreenName() );
+            }
+        }
+
+        handler.post(showStatus);
+        handler.postDelayed(hideStatus, 3000 );
     }
 
     private void handleIdentity(String fromNode, List<byte[]> payload)
@@ -866,7 +873,10 @@ public class MeshballApplication extends Application
             player = new Player( playerID );
             addPlayer( player );
 
-            Toast.makeText(meshballActivity, getString(R.string.has_joined, name), Toast.LENGTH_LONG).show();
+            statusMessage = getString(R.string.has_joined, name);
+
+            handler.post(showStatus);
+            handler.postDelayed(hideStatus, 3000 );
         }
 
         player.setScreenName( name );
@@ -897,6 +907,21 @@ public class MeshballApplication extends Application
 
     public void joinGame()
     {
+        score = 0;
+
+        players.clear();
+        playersMap.clear();
+        reviewList.clear();
+        confirmList.clear();
+
+        // Make sure we are in our player map correctly (but not in the playerList)
+        Player me = new Player( getPlayerID() );
+        me.setScreenName( screenName );
+        me.setIsPlaying(true);
+        me.setPicture(getProfileImage());
+        me.setIsMe( true );
+        addPlayer(me);
+
         magnet.joinChannel( CHANNEL, channelListener );
         playing = true;
     }

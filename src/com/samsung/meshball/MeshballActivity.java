@@ -49,7 +49,7 @@ public class MeshballActivity extends Activity
     private TextView scoreLabel;
     private TextView reviewLabel;
     private TextView confirmLabel;
-    private TextView hitMessageLabel;
+    private TextView statusMessageLabel;
     private ViewfinderView viewFinder;
     private boolean fromCreate;
     private Handler handler;
@@ -199,12 +199,6 @@ public class MeshballActivity extends Activity
         app.loadPreferences();
         app.setMeshballActivity( this );
 
-        if ( app.isFirstTime() || (app.getScreenName() == null) ) {
-            Log.i(TAG, "Display name is %s or is first time (%s). Switching to the ProfileActivity...",
-                  app.getScreenName(), (app.isFirstTime() ? "YES" : "NO"));
-            startActivity(new Intent(this, ProfileActivity.class));
-        }
-
         preview = (FrameLayout) findViewById( R.id.preview_view );
         scoreLabel = (TextView) findViewById( R.id.score_label );
         fireButton = (ImageButton) findViewById( R.id.fire_button );
@@ -212,7 +206,7 @@ public class MeshballActivity extends Activity
         reviewLabel = (TextView) findViewById( R.id.review_counter );
         confirmLabel = (TextView) findViewById( R.id.confirm_counter );
 
-        hitMessageLabel = (TextView) findViewById( R.id.hit_message );
+        statusMessageLabel = (TextView) findViewById( R.id.hit_message );
 
         viewFinder = (ViewfinderView) findViewById( R.id.viewfinder_view );
         viewFinder.setMeshballActivity( this );
@@ -288,17 +282,18 @@ public class MeshballActivity extends Activity
         super.onResume();
 
         Camera camera = getCameraInstance();
+        if ( camera != null ) {
+            if ( ! configManager.isInitialized() ) {
+                configManager.initFromCameraParameters(camera);
+            }
+            configManager.setDesiredCameraParameters( camera );
 
-        if ( ! configManager.isInitialized() ) {
-            configManager.initFromCameraParameters(camera);
+            preview.removeAllViews();
+            cameraPreview = new CameraPreview(this, camera);
+            preview.addView(cameraPreview, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) );
+
+            cameraPreview.startPreview();
         }
-        configManager.setDesiredCameraParameters( camera );
-
-        preview.removeAllViews();
-        cameraPreview = new CameraPreview(this, camera);
-        preview.addView(cameraPreview, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) );
-
-        cameraPreview.startPreview();
 
         updateHUD();
 
@@ -347,6 +342,34 @@ public class MeshballActivity extends Activity
 
         MeshballApplication app = (MeshballApplication) getApplication();
         WifiUtils wifiUtils = app.getWifiUtils();
+
+        if ( app.hasNoService() ) {
+            String title = getString(R.string.dlg_noservice_title);
+            String message = getString(R.string.dlg_noservice_message);
+            displayDialog(title, message);
+            fireButton.setVisibility(View.INVISIBLE);
+            statusMessageLabel.setText(R.string.no_service);
+            statusMessageLabel.setTextColor(Color.RED);
+            statusMessageLabel.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        if ( app.hasNoValidSDK() ) {
+            String title = getString(R.string.dlg_not_valid_sdk_title);
+            String message = getString(R.string.dlg_not_valid_sdk_message);
+            displayDialog(title, message);
+            fireButton.setVisibility(View.INVISIBLE);
+            statusMessageLabel.setText(R.string.invalid_sdk);
+            statusMessageLabel.setTextColor(Color.RED);
+            statusMessageLabel.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        if ( app.isFirstTime() || (app.getScreenName() == null) ) {
+            Log.i(TAG, "Display name is %s or is first time (%s). Switching to the ProfileActivity...",
+                  app.getScreenName(), (app.isFirstTime() ? "YES" : "NO"));
+            startActivity(new Intent(this, ProfileActivity.class));
+        }
 
         boolean isEnabled = wifiUtils.getWifiManager().isWifiEnabled() || wifiUtils.isWifiApEnabled();
         if( !isEnabled || (!wifiUtils.isWifiApEnabled() && (wifiUtils.getWifiManager().getConnectionInfo().getSSID() == null))) {
@@ -410,6 +433,11 @@ public class MeshballActivity extends Activity
     {
         Log.d(TAG, "Selected: %s", item.getTitle());
 
+        MeshballApplication app = (MeshballApplication) getApplication();
+        if ( app.hasNoService() || app.hasNoValidSDK() ) {
+            return false;
+        }
+
         Intent intent;
         switch(item.getItemId()) {
             case R.id.menu_players:
@@ -432,7 +460,6 @@ public class MeshballActivity extends Activity
                 return true;
 
             case R.id.menu_leave_rejoin:
-                MeshballApplication app = (MeshballApplication) getApplication();
                 if ( app.isPlaying() ) {
                     displayReallyLeaveDialog();
                 }
@@ -604,6 +631,23 @@ public class MeshballActivity extends Activity
         alert.show();
     }
 
+    private void displayDialog(String title, String message)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MeshballActivity.this);
+        builder.setMessage(message)
+                .setTitle(title)
+                .setPositiveButton(R.string.okay, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i)
+                    {
+                        //
+                    }
+                });
+
+        builder.show();
+    }
+
     private void displayFrameworkBugMessageAndExit()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder( this );
@@ -668,12 +712,12 @@ public class MeshballActivity extends Activity
 
     public void hideHitMessage()
     {
-        hitMessageLabel.setVisibility( View.INVISIBLE );
+        statusMessageLabel.setVisibility(View.INVISIBLE);
     }
 
     public void setHitMessage( String message )
     {
-        hitMessageLabel.setText( message );
-        hitMessageLabel.setVisibility( View.VISIBLE );
+        statusMessageLabel.setText(message);
+        statusMessageLabel.setVisibility(View.VISIBLE);
     }
 }

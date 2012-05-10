@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -14,6 +15,8 @@ import android.widget.Toast;
  */
 public class PlayersActivity extends Activity
 {
+    private AlertDialog alert;
+
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -33,9 +36,11 @@ public class PlayersActivity extends Activity
                         }
                     })
                     .setCancelable(true);
-            AlertDialog alert = builder.create();
+            alert = builder.create();
             alert.show();
 
+            TextView noPlayersLabel = (TextView) findViewById( R.id.no_players_text );
+            noPlayersLabel.setVisibility( View.VISIBLE );
         }
 
         GridView gridview = (GridView) findViewById(R.id.player_grid);
@@ -46,5 +51,14 @@ public class PlayersActivity extends Activity
                 Toast.makeText(PlayersActivity.this, "" + position, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        if ( alert != null ) {
+            alert.dismiss();
+        }
     }
 }

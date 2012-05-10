@@ -25,9 +25,7 @@
             android:layout_below="@id/confirm_label"
             android:layout_centerHorizontal="true"
             android:src="@drawable/missing_profile"
-            android:onClick="true"
-            android:focusable="true"
-            android:clickable="true"
+            android:onClick="confirmPicturePressed"
             android:layout_margin="5dp"/>
 
     <TextView
@@ -51,9 +49,6 @@
             android:layout_below="@id/confirm_hit_label"
             android:layout_centerHorizontal="true"
             android:src="@drawable/missing_profile"
-            android:onClick="true"
-            android:focusable="true"
-            android:clickable="true"
             android:layout_margin="5dp"/>
 
     <Button android:id="@+id/confirm_hit_button"

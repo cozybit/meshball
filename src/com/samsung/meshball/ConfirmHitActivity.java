@@ -101,4 +101,9 @@ public class ConfirmHitActivity
             finish();
         }
     }
+
+    public void confirmPicturePressed(View v)
+    {
+        Log.mark( TAG );
+    }
 }

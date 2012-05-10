@@ -4,7 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.*;
+import android.widget.AdapterView;
+import android.widget.GridView;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import com.samsung.meshball.utils.Log;
 
 import java.io.IOException;
@@ -147,8 +150,16 @@ public class ReviewHitActivity extends Activity
 
     public void picturePressed(View v)
     {
-        Intent intent = new Intent( this, FullScreenActivity.class );
-        intent.putExtra( "index", viewingIdx );
-        startActivity( intent );
+        MeshballApplication app = (MeshballApplication) getApplication();
+        Candidate candidate = app.getReviewList().get( viewingIdx );
+        if ( candidate.getPlayerID() != null ) {
+            checkMark.setVisibility( View.INVISIBLE );
+            candidate.setPlayerID( null );
+        }
+        else {
+            Intent intent = new Intent( this, FullScreenActivity.class );
+            intent.putExtra( "index", viewingIdx );
+            startActivity( intent );
+        }
     }
 }

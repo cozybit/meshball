@@ -41,6 +41,9 @@
     <string name="toast_service_terminated">Magnet Service Terminated</string>
     <string name="toast_failed_send_file">Failed to send file</string>
 
+    <string name="no_service">No magnet service installed.</string>
+    <string name="invalid_sdk">Magnet SDK is invalid.</string>
+
     <string name="msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>
 
     <string name="dlg_displayname_title">Missing Name</string>
@@ -74,7 +77,13 @@
     <string name="crop_option_choose_title">Choose Crop Option</string>
     <string name="crop_option_no_result_message">Sorry, but was unable to process image. Please pick another.</string>
 
-    <string name="hit_message" formatted="false">%s has taken out %s</string>
+    <string name="hit_message" formatted="false">%s has taken out %s!</string>
+    <string name="hit_message_self">You were hit by %s!</string>
+    <string name="hit_message_credit">You hit %s!</string>
+
+    <string name="game_over">Game Over!</string>
+    <string name="game_over_subtext">You are out...</string>
+    <string name="game_over_playagain">Play Again</string>
 
     <!-- confirm_hit.xml -->
     <string name="confirm_lbl_txt">Confirm Hit:</string>
@@ -84,7 +93,7 @@
 
     <!-- grid_item.xml -->
     <string name="grid_lbl_txt">Giraffe Master</string>
-    
+
     <!-- main.xml -->
     <string name="review_counter_txt">0</string>
     <string name="score_lbl_txt">Score: %d</string>
@@ -94,6 +103,8 @@
     <string name="review_lbl_txt">Review Hit:</string>
     <string name="hint_labl_txt">Scroll through list and match the player:</string>
     <string name="hint_labl2_txt">Click on the player to \'Hit\' them</string>
+
+    <string name="no_players_txt">No players yet.</string>
 
     <string name="menu_players">Players</string>
     <string name="menu_share">Share</string>

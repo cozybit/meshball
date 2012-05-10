@@ -24,20 +24,30 @@
     <application android:label="@string/app_name" android:icon="@drawable/meshball_icon"
                  android:name=".MeshballApplication"
                  android:theme="@android:style/Theme.Holo.Light">
-        <activity android:name="MeshballActivity">
+        <activity android:name="MeshballActivity"
+                  android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <activity android:name=".PreferencesActivity"/>
-        <activity android:name=".ProfileActivity"/>
-        <activity android:name=".ImagePickerActivity" />
-        <activity android:name=".PlayersActivity"/>
-        <activity android:name=".ReviewHitActivity"/>
-        <activity android:name=".ConfirmHitActivity"/>
-        <activity android:name=".FullScreenActivity"/>
+        <activity android:name=".PreferencesActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".ProfileActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".ImagePickerActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".PlayersActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".ReviewHitActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".ConfirmHitActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".FullScreenActivity"
+                  android:screenOrientation="portrait"/>
+        <activity android:name=".GameOverActivity"
+                  android:screenOrientation="portrait"/>
 
     </application>
 </manifest>
