@@ -21,14 +21,12 @@
     <RelativeLayout android:id="@+id/review_layout"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:layout_margin="5dp"
                   android:orientation="horizontal"
                   android:layout_centerHorizontal="true"
                   android:layout_below="@id/review_label">
 
         <ImageView
                 android:id="@+id/review_picture"
-                android:background="@drawable/bordered_drawable"
                 android:layout_width="140dp"
                 android:layout_height="140dp"
                 android:src="@drawable/missing_profile"
@@ -96,14 +94,15 @@
     </TextView>
 
     <GridView android:id="@+id/player_grid"
-              android:layout_width="fill_parent"
-              android:layout_height="160dp"
+              android:layout_width="160dp"
+              android:layout_height="180dp"
+              android:layout_centerHorizontal="true"
               android:paddingLeft="5dp"
               android:paddingRight="5dp"
               android:layout_marginTop="5dp"
               android:layout_below="@id/hint_label"
               android:background="@color/light_grey"
-              android:numColumns="auto_fit"
+              android:numColumns="1"
               android:verticalSpacing="2dp"
               android:horizontalSpacing="2dp"
               android:stretchMode="columnWidth"/>
@@ -125,7 +124,7 @@
             android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:layout_marginBottom="15dp"
+            android:layout_marginBottom="5dp"
             android:layout_centerHorizontal="true"
             android:onClick="donePressed"
             android:text="@string/review_done_button"/>
