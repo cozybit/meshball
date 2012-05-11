@@ -17,12 +17,25 @@
             android:textSize="22sp">
     </TextView>
 
+    <TextView
+            android:id="@+id/confirm_remaining_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/confirm_label"
+            android:textColor="@color/solid_black"
+            android:layout_marginTop="3dp"
+            android:text="@string/confirm_remaining_text"
+            android:textSize="15sp">
+    </TextView>
+
+
     <ImageView
             android:id="@+id/confirm_image"
             android:background="@drawable/bordered_drawable"
             android:layout_width="160dp"
             android:layout_height="160dp"
-            android:layout_below="@id/confirm_label"
+            android:layout_below="@id/confirm_remaining_label"
             android:layout_centerHorizontal="true"
             android:src="@drawable/missing_profile"
             android:onClick="confirmPicturePressed"
@@ -55,8 +68,8 @@
             android:layout_width="150dp"
             android:layout_margin="20dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/with_image"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
             android:onClick="confirmHitPressed"
             android:textColor="@color/solid_black"
             android:text="@string/confirm_hit_btn" />
@@ -65,7 +78,7 @@
             android:layout_width="150dp"
             android:layout_margin="20dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/with_image"
+            android:layout_alignParentBottom="true"
             android:onClick="badHitPressed"
             android:layout_alignParentRight="true"
             android:textColor="@color/solid_black"

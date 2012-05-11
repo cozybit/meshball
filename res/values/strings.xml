@@ -87,6 +87,7 @@
 
     <!-- confirm_hit.xml -->
     <string name="confirm_lbl_txt">Confirm Hit:</string>
+    <string name="confirm_remaining_text">(%d remaining)</string>
     <string name="hit_lbl_txt" formatted="false">%s claims to have hit %s</string>
     <string name="confirm_hit_btn">Confirm</string>
     <string name="bad_hit_btn">Bad Shot</string>

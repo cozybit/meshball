@@ -51,7 +51,7 @@ final class InactivityTimer {
             TimeUnit.SECONDS);
       } catch (RejectedExecutionException ree) {
         // surprising, but could be normal if for some reason the implementation just doesn't
-        // think it can shcedule again. Since this time-out is non-essential, just forget it
+        // think it can schedule again. Since this time-out is non-essential, just forget it
       }
     }
   }

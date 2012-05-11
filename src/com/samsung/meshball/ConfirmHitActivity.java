@@ -24,6 +24,7 @@ public class ConfirmHitActivity
     private ImageView confirmImage;
     private ImageView withImage;
     private TextView hitMessage;
+    private TextView remainingMessage;
     private Candidate beingReviewed;
 
     public void onCreate(Bundle savedInstanceState)
@@ -34,6 +35,7 @@ public class ConfirmHitActivity
         confirmImage = (ImageView) findViewById( R.id.confirm_image );
         withImage = (ImageView) findViewById( R.id.with_image );
         hitMessage = (TextView) findViewById( R.id.confirm_hit_label );
+        remainingMessage = (TextView) findViewById( R.id.confirm_remaining_label );
 
         nextCandidate();
     }
@@ -67,9 +69,12 @@ public class ConfirmHitActivity
                 hitMessage.setText(getString(R.string.hit_lbl_txt, shooter.getScreenName(), player.getScreenName()));
                 break;
             }
+
             Log.e( TAG, "Error getting player back for candidate: %s. Perhaps they left? Removing from list!", candidate);
             it.remove();
         }
+
+        remainingMessage.setText( getString( R.string.confirm_remaining_text, app.getConfirmList().size() ) );
     }
 
     public void confirmHitPressed(View v)
