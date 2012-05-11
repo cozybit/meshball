@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012, Wobblesoft LLC, All rights reserved.
  */
-package com.samsung.meshball;
+package com.samsung.meshball.adapters;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -10,14 +10,16 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.samsung.meshball.MeshballApplication;
+import com.samsung.meshball.data.Player;
+import com.samsung.meshball.R;
 
 import java.util.List;
 
 /**
  * This class ...
  */
-public class ReviewAdapter
-        extends BaseAdapter
+public class PlayerAdapter extends BaseAdapter
 {
     private LayoutInflater inflater;
     private Activity context;
@@ -26,9 +28,10 @@ public class ReviewAdapter
     {
         ImageView gridImage;
         TextView gridText;
+        ImageView hitImage;
     }
 
-    public ReviewAdapter(Activity context)
+    public PlayerAdapter(Activity context)
     {
         inflater = LayoutInflater.from(context);
         this.context = context;
@@ -37,7 +40,7 @@ public class ReviewAdapter
     public int getCount()
     {
         MeshballApplication app = (MeshballApplication) context.getApplication();
-        return (app.getReviewList() != null ? app.getReviewList().size() : 0);
+        return (app.getPlayers() != null ? app.getPlayers().size() : 0);
     }
 
     public Object getItem(int position)
@@ -60,6 +63,7 @@ public class ReviewAdapter
 
             holder.gridImage = (ImageView) convertView.findViewById(R.id.grid_image);
             holder.gridText = (TextView) convertView.findViewById(R.id.grid_label);
+            holder.hitImage = (ImageView) convertView.findViewById(R.id.grid_x_mark);
 
             convertView.setTag(holder);
         }
@@ -73,6 +77,13 @@ public class ReviewAdapter
 
         holder.gridImage.setImageBitmap(player.getPicture());
         holder.gridText.setText(player.getScreenName());
+
+        if ( player.getHitBy() != null ) {
+            holder.hitImage.setVisibility( View.VISIBLE );
+        }
+        else {
+            holder.hitImage.setVisibility( View.INVISIBLE );
+        }
 
         return convertView;
     }

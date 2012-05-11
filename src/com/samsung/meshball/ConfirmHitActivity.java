@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.samsung.meshball.data.Candidate;
+import com.samsung.meshball.data.Player;
 import com.samsung.meshball.utils.Log;
 
 import java.io.IOException;
@@ -53,7 +55,7 @@ public class ConfirmHitActivity
             Player player = app.getPlayer( candidate.getPlayerID() );
             Player shooter = app.getPlayer( candidate.getShooterID() );
 
-            if ( (player != null) && (shooter != null) ) {
+            if ( (player != null) && (player.getPicture() != null) && (shooter != null) && (shooter.getPicture() != null) ) {
                 try {
                     confirmImage.setImageBitmap( candidate.getBitmap() );
                 }
@@ -62,7 +64,7 @@ public class ConfirmHitActivity
                 }
 
                 withImage.setImageBitmap( player.getPicture() );
-                hitMessage.setText(getString(R.string.hit_lbl_txt, player.getScreenName(), shooter.getScreenName()));
+                hitMessage.setText(getString(R.string.hit_lbl_txt, shooter.getScreenName(), player.getScreenName()));
                 break;
             }
             Log.e( TAG, "Error getting player back for candidate: %s. Perhaps they left? Removing from list!", candidate);

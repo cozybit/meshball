@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012, Wobblesoft LLC, All rights reserved.
  */
-package com.samsung.meshball;
+package com.samsung.meshball.adapters;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -10,14 +10,22 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.samsung.meshball.MeshballApplication;
+import com.samsung.meshball.R;
+import com.samsung.meshball.data.Candidate;
+import com.samsung.meshball.utils.Log;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
  * This class ...
  */
-public class PlayerAdapter extends BaseAdapter
+public class ReviewAdapter
+        extends BaseAdapter
 {
+    private static final String TAG = ReviewAdapter.class.getName();
+
     private LayoutInflater inflater;
     private Activity context;
 
@@ -25,10 +33,10 @@ public class PlayerAdapter extends BaseAdapter
     {
         ImageView gridImage;
         TextView gridText;
-        ImageView hitImage;
+        ImageView gridCheckmark;
     }
 
-    public PlayerAdapter(Activity context)
+    public ReviewAdapter(Activity context)
     {
         inflater = LayoutInflater.from(context);
         this.context = context;
@@ -37,7 +45,7 @@ public class PlayerAdapter extends BaseAdapter
     public int getCount()
     {
         MeshballApplication app = (MeshballApplication) context.getApplication();
-        return (app.getPlayers() != null ? app.getPlayers().size() : 0);
+        return (app.getReviewList() != null ? app.getReviewList().size() : 0);
     }
 
     public Object getItem(int position)
@@ -60,7 +68,7 @@ public class PlayerAdapter extends BaseAdapter
 
             holder.gridImage = (ImageView) convertView.findViewById(R.id.grid_image);
             holder.gridText = (TextView) convertView.findViewById(R.id.grid_label);
-            holder.hitImage = (ImageView) convertView.findViewById(R.id.grid_x_mark);
+            holder.gridCheckmark = (ImageView) convertView.findViewById(R.id.grid_check_mark);
 
             convertView.setTag(holder);
         }
@@ -69,18 +77,24 @@ public class PlayerAdapter extends BaseAdapter
         }
 
         MeshballApplication app = (MeshballApplication) context.getApplication();
-        List<Player> players = app.getPlayers();
-        Player player = players.get(position);
+        List<Candidate> reviewList = app.getReviewList();
+        Candidate candidate = reviewList.get(position);
 
-        holder.gridImage.setImageBitmap(player.getPicture());
-        holder.gridText.setText(player.getScreenName());
-
-        if ( player.getHitBy() != null ) {
-            holder.hitImage.setVisibility( View.VISIBLE );
+        if ( candidate.getPlayerID() != null ) {
+            holder.gridCheckmark.setVisibility( View.VISIBLE );
         }
         else {
-            holder.hitImage.setVisibility( View.INVISIBLE );
+            holder.gridCheckmark.setVisibility( View.INVISIBLE );
         }
+
+        try {
+            holder.gridImage.setImageBitmap(candidate.getBitmap());
+        }
+        catch(IOException e) {
+            holder.gridImage.setImageDrawable(context.getResources().getDrawable(R.drawable.missing_profile));
+            Log.e(TAG, e, "Failed to set candidate bitmap.");
+        }
+        holder.gridText.setVisibility( View.INVISIBLE );
 
         return convertView;
     }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
+import com.samsung.meshball.data.Candidate;
 import com.samsung.meshball.utils.Log;
 
 import java.io.IOException;

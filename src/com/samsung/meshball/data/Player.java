@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012, Wobblesoft LLC, All rights reserved.
  */
-package com.samsung.meshball;
+package com.samsung.meshball.data;
 
 import android.graphics.Bitmap;
 

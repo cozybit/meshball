@@ -82,7 +82,7 @@
     <string name="hit_message_credit">You hit %s!</string>
 
     <string name="game_over">Game Over!</string>
-    <string name="game_over_subtext">You are out...</string>
+    <string name="game_over_subtext">You are out…</string>
     <string name="game_over_playagain">Play Again</string>
 
     <!-- confirm_hit.xml -->
@@ -100,9 +100,11 @@
     <string name="confirm_counter_txt">0</string>
     
     <!-- review_player.xml -->
-    <string name="review_lbl_txt">Review Hit:</string>
+    <string name="review_lbl_txt">Review Hit</string>
     <string name="hint_labl_txt">Scroll through list and match the player:</string>
     <string name="hint_labl2_txt">Click on the player to \'Hit\' them</string>
+    <string name="review_done_button">Done</string>
+    <string name="review_reject_button">Reject Shot</string>
 
     <string name="no_players_txt">No players yet.</string>
 

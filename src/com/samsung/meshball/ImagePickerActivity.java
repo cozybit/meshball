@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+import com.samsung.meshball.adapters.CropOptionAdapter;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.Utils;

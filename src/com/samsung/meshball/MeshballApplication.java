@@ -17,6 +17,8 @@ import android.telephony.TelephonyManager;
 import android.widget.Toast;
 import com.samsung.magnet.wrapper.MagnetAgent;
 import com.samsung.magnet.wrapper.MagnetAgentImpl;
+import com.samsung.meshball.data.Candidate;
+import com.samsung.meshball.data.Player;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.Utils;
@@ -876,7 +878,7 @@ public class MeshballApplication extends Application
             statusMessage = getString(R.string.has_joined, name);
 
             handler.post(showStatus);
-            handler.postDelayed(hideStatus, 3000 );
+            handler.postDelayed(hideStatus, 3000);
         }
 
         player.setScreenName( name );

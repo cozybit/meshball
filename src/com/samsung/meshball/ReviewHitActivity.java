@@ -8,6 +8,9 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import com.samsung.meshball.adapters.PlayerAdapter;
+import com.samsung.meshball.data.Candidate;
+import com.samsung.meshball.data.Player;
 import com.samsung.meshball.utils.Log;
 
 import java.io.IOException;
@@ -82,10 +85,22 @@ public class ReviewHitActivity extends Activity
 
     public void previousPressed(View v)
     {
+        viewingIdx--;
+        displayReviewImage();
+    }
+
+    public void nextPressed(View v)
+    {
+        viewingIdx++;
+        displayReviewImage();
+    }
+
+    private void displayReviewImage()
+    {
         MeshballApplication app = (MeshballApplication) getApplication();
         List<Candidate> reviewList = app.getReviewList();
 
-        Candidate candidate = reviewList.get( --viewingIdx );
+        Candidate candidate = reviewList.get( viewingIdx );
         try {
             reviewImage.setImageBitmap( candidate.getBitmap() );
         }
@@ -106,36 +121,10 @@ public class ReviewHitActivity extends Activity
 
         if ( viewingIdx == 0 ) {
             previousButton.setVisibility( View.INVISIBLE );
-            viewingIdx = 0;
         }
 
         if ( viewingIdx < (reviewList.size() - 1) ) {
             nextButton.setVisibility( View.VISIBLE );
-        }
-    }
-
-    public void nextPressed(View v)
-    {
-        MeshballApplication app = (MeshballApplication) getApplication();
-        List<Candidate> reviewList = app.getReviewList();
-
-        Candidate candidate = reviewList.get( ++viewingIdx );
-        try {
-            reviewImage.setImageBitmap( candidate.getBitmap() );
-        }
-        catch(IOException e) {
-            Log.e(TAG, e, "%s - Failed to load candidate bitmap: %s", e.getMessage(), candidate);
-        }
-
-        String playerID = candidate.getPlayerID();
-        if ( playerID != null ) {
-            int idx = app.findPlayer( playerID );
-            // Scroll to that grid cell
-            gridview.smoothScrollToPosition( idx );
-            checkMark.setVisibility( View.VISIBLE );
-        }
-        else {
-            checkMark.setVisibility( View.INVISIBLE );
         }
 
         if ( viewingIdx >= (reviewList.size() - 1) ) {
@@ -160,6 +149,31 @@ public class ReviewHitActivity extends Activity
             Intent intent = new Intent( this, FullScreenActivity.class );
             intent.putExtra( "index", viewingIdx );
             startActivity( intent );
+        }
+    }
+
+    public void donePressed(View v)
+    {
+        MeshballApplication app = (MeshballApplication) getApplication();
+        app.setReviewing( false );
+        finish();
+    }
+
+    public void rejectPressed(View v)
+    {
+        MeshballApplication app = (MeshballApplication) getApplication();
+        List<Candidate> reviewList = app.getReviewList();
+        reviewList.remove( viewingIdx );
+
+        if ( reviewList.size() == 0 ) {
+            app.setReviewing( false );
+            finish();
+        }
+        else {
+            if ( viewingIdx > (reviewList.size() - 1) ) {
+                viewingIdx = (reviewList.size() - 1);
+            }
+            displayReviewImage();
         }
     }
 }

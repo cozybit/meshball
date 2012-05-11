@@ -1,4 +1,4 @@
-package com.samsung.meshball;
+package com.samsung.meshball.data;
 
 import android.graphics.Bitmap;
 import com.samsung.meshball.utils.MediaManager;

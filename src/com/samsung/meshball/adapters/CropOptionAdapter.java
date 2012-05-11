@@ -1,4 +1,4 @@
-package com.samsung.meshball;
+package com.samsung.meshball.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.samsung.meshball.R;
 
 import java.util.List;
 

@@ -11,95 +11,123 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_alignParentTop="true"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="5dp"
             android:textColor="@color/solid_black"
             android:text="@string/review_lbl_txt"
-            android:textSize="22sp">
+            android:textStyle="bold"
+            android:textSize="20sp">
     </TextView>
 
-    <ImageView
-            android:id="@+id/review_picture"
-            android:background="@drawable/bordered_drawable"
-            android:layout_width="160dp"
-            android:layout_height="160dp"
-            android:layout_below="@id/review_label"
-            android:layout_centerHorizontal="true"
-            android:src="@drawable/missing_profile"
-            android:onClick="picturePressed"
-            android:focusable="true"
-            android:clickable="true"
-            android:layout_margin="5dp"/>
+    <RelativeLayout android:id="@+id/review_layout"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_margin="5dp"
+                  android:orientation="horizontal"
+                  android:layout_centerHorizontal="true"
+                  android:layout_below="@id/review_label">
+
+        <ImageView
+                android:id="@+id/review_picture"
+                android:background="@drawable/bordered_drawable"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:src="@drawable/missing_profile"
+                android:onClick="picturePressed"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginLeft="5dp"
+                android:layout_margin="2dp"/>
+
+        <ImageView
+                android:id="@+id/check_mark"
+                android:layout_width="75dp"
+                android:layout_height="75dp"
+                android:layout_alignBottom="@id/review_picture"
+                android:layout_alignRight="@id/review_picture"
+                android:layout_centerHorizontal="true"
+                android:src="@drawable/check_mark_md"
+                android:visibility="invisible"
+                android:layout_margin="2dp"/>
+
+        <Button android:id="@+id/review_reject_button"
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/review_picture"
+                android:layout_alignLeft="@id/review_picture"
+                android:onClick="rejectPressed"
+                android:text="@string/review_reject_button" />
+
+    </RelativeLayout>
 
     <ImageButton android:id="@+id/previous_button"
                  android:layout_width="wrap_content"
-                 android:layout_height="160dp"
+                 android:layout_height="140dp"
+                 android:layout_marginTop="5dp"
                  android:src="@drawable/left_button"
                  android:background="@null"
                  android:onClick="previousPressed"
                  android:visibility="invisible"
                  android:layout_below="@id/review_label"
-                 android:layout_toLeftOf="@id/review_picture" />
+                 android:layout_toLeftOf="@id/review_layout" />
 
     <ImageButton android:id="@+id/next_button"
                  android:layout_width="wrap_content"
-                 android:layout_height="160dp"
+                 android:layout_height="140dp"
+                 android:layout_marginTop="5dp"
                  android:src="@drawable/right_button"
                  android:background="@null"
                  android:onClick="nextPressed"
                  android:visibility="invisible"
                  android:layout_below="@id/review_label"
-                 android:layout_toRightOf="@id/review_picture" />
+                 android:layout_toRightOf="@id/review_layout" />
 
-    <ImageView
-            android:id="@+id/check_mark"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
-            android:layout_alignBottom="@id/review_picture"
-            android:layout_alignRight="@id/review_picture"
-            android:layout_centerHorizontal="true"
-            android:src="@drawable/check_mark_md"
-            android:visibility="invisible"
-            android:layout_margin="2dp"/>
 
     <TextView
             android:id="@+id/hint_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_below="@id/review_picture"
+            android:layout_below="@id/review_layout"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="5dp"
             android:textColor="@color/solid_black"
-            android:layout_marginTop="10dp"
             android:text="@string/hint_labl_txt"
-            android:textSize="16sp">
+            android:textSize="14sp">
     </TextView>
 
-    <RelativeLayout
-            android:id="@+id/profile_imageframe"
-            android:layout_width="160dp"
-            android:layout_height="210dp"
-            android:layout_margin="10dp"
-            android:layout_centerHorizontal="true"
-            android:layout_below="@id/hint_label">
-
-        <GridView android:id="@+id/player_grid"
-                  android:layout_width="fill_parent"
-                  android:layout_height="fill_parent"
-                  android:numColumns="1"
-                  android:verticalSpacing="0dp"
-                  android:horizontalSpacing="10dp"
-                  android:stretchMode="columnWidth"
-                  android:gravity="center"/>
-    </RelativeLayout>
+    <GridView android:id="@+id/player_grid"
+              android:layout_width="fill_parent"
+              android:layout_height="160dp"
+              android:paddingLeft="5dp"
+              android:paddingRight="5dp"
+              android:layout_marginTop="5dp"
+              android:layout_below="@id/hint_label"
+              android:background="@color/light_grey"
+              android:numColumns="auto_fit"
+              android:verticalSpacing="2dp"
+              android:horizontalSpacing="2dp"
+              android:stretchMode="columnWidth"/>
 
     <TextView
             android:id="@+id/hint_label2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_below="@id/profile_imageframe"
+            android:layout_below="@id/player_grid"
+            android:layout_marginTop="2dp"
             android:textColor="@color/solid_black"
             android:text="@string/hint_labl2_txt"
-            android:textSize="16sp">
+            android:textSize="14sp">
     </TextView>
+
+
+    <Button android:id="@+id/review_done_button"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="15dp"
+            android:layout_centerHorizontal="true"
+            android:onClick="donePressed"
+            android:text="@string/review_done_button"/>
 
 </RelativeLayout>
