@@ -22,6 +22,8 @@ LOCAL_PACKAGE_NAME := Meshball
 
 LOCAL_CERTIFICATE := platform
 
+LOCAL_PROGUARD_FLAG_FILES := proguard.cfg
+
 LOCAL_STATIC_JAVA_LIBRARIES := magnet-service-api
 
 LOCAL_SRC_FILES := $(call all-subdir-java-files, src)
