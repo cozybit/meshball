@@ -43,6 +43,8 @@ public class MeshballApplication extends Application
 
     public static final String REFRESH = "com.samsung.meshball/refresh";
 
+    private static final int MINUTES = (1000 * 60);
+
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
     private boolean isReady = false;
@@ -64,6 +66,8 @@ public class MeshballApplication extends Application
     private int broadcastRetry = 0;
     private long broadcastExpiry;
 
+    private long inactivityTimer = 0;
+
     private List<Candidate> reviewList = new ArrayList<Candidate>();
     private List<Candidate> confirmList = new ArrayList<Candidate>();
 
@@ -83,11 +87,32 @@ public class MeshballApplication extends Application
         @Override
         public void run()
         {
+            if ( (inactivityTimer != 0) && ((inactivityTimer - System.currentTimeMillis()) < 0) ) {
+                // Times up!
+
+                Log.d( TAG, "TIMES UP!!!! Releasing magnet and finishing activity..." );
+                releaseService();
+
+                // Clean up!
+                players.clear();
+                playersMap.clear();
+                nodeMap.clear();
+                reviewList.clear();
+                confirmList.clear();
+
+                if ( meshballActivity != null ) {
+                    meshballActivity.finish();
+                }
+                inactivityTimer = 0;
+            }
+
+            // Test out any broadcast retries...
             if ( (broadcastExpiry > 0) && ((broadcastExpiry - System.currentTimeMillis()) <= 0) ) {
                 broadcastExpiry = 0;
                 broadcastRetry = 0;
             }
 
+            // Handle any stuff to review...
             if ( ! reviewing ) {
                 Iterator<Candidate> it = reviewList.iterator();
                 while ( it.hasNext() ) {
@@ -95,6 +120,7 @@ public class MeshballApplication extends Application
                     if ( candidate.getPlayerID() != null ) {
 
                         // Let's rename our file to include the player's ID who we claim to have hit...
+
                         StringBuilder newName = new StringBuilder();
                         newName.append( candidate.getPlayerID() );
                         newName.append(  "." );
@@ -417,9 +443,7 @@ public class MeshballApplication extends Application
 
         wifiUtils = new WifiUtils( this );
 
-        magnet = new MagnetAgentImpl();
-        magnet.initService(getApplicationContext(), serviceListener);
-        magnet.registerPublicChannelListener(channelListener);
+        testService();
 
         // Add some players
 
@@ -448,7 +472,6 @@ public class MeshballApplication extends Application
         Log.i(TAG, "Cancelling timer tasks...");
         timer.cancel();
 
-        Log.mark( TAG );
         super.onTerminate();
     }
 
@@ -742,7 +765,7 @@ public class MeshballApplication extends Application
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         Bitmap image = getProfileImage();
-        image.compress( Bitmap.CompressFormat.PNG, 0, bos );
+        image.compress(Bitmap.CompressFormat.PNG, 0, bos);
 
         List<byte[]> payload = new ArrayList<byte[]>();
 
@@ -753,25 +776,25 @@ public class MeshballApplication extends Application
 
         broadcastRetry++;
 
-        magnet.sendData( null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
+        magnet.sendData(null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
         {
             @Override
             public void onFailure(int reason)
             {
-                Log.e( TAG, "Failure broadcasting identity. Reason = %d", reason );
+                Log.e(TAG, "Failure broadcasting identity. Reason = %d", reason);
 
                 // Schedule it again...
-                handler.postDelayed( new Runnable()
+                handler.postDelayed(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        if ( broadcastRetry < 5 ) {
+                        if(broadcastRetry < 5) {
                             broadcastIdentity();
                         }
                         broadcastExpiry = System.currentTimeMillis() + 2000;
                     }
-                }, 1000 );
+                }, 1000);
             }
         });
     }
@@ -933,7 +956,7 @@ public class MeshballApplication extends Application
         Log.i(TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode);
 
         byte[] bytes = payload.get(3);
-        player.setPicture( BitmapFactory.decodeByteArray(bytes, 0, bytes.length) );
+        player.setPicture(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
 
         // Let's still make a mapping with the node ID
 
@@ -943,7 +966,7 @@ public class MeshballApplication extends Application
         if ( (player.getNodeID() != null) && ! player.getNodeID().equals(fromNode) ) {
             Log.e( TAG, "ERROR: Got a different fromNode for Player ID %s.  Expected %s but got %s", playerID, player.getNodeID(), fromNode);
         }
-        player.setNodeID( fromNode );
+        player.setNodeID(fromNode);
     }
 
     public WifiUtils getWifiUtils()
@@ -980,7 +1003,7 @@ public class MeshballApplication extends Application
         score = 0;
         meshballActivity.updateHUD();
 
-        magnet.leaveChannel( CHANNEL );
+        magnet.leaveChannel(CHANNEL);
         playing = false;
     }
 
@@ -998,7 +1021,7 @@ public class MeshballApplication extends Application
             payload.add( beingReviewed.getShooterID().getBytes() );
             payload.add( getPlayerID().getBytes() );
 
-            Log.d( TAG, "Broadcasting confirmed hit!" );
+            Log.d( TAG, "Broadcasting confirmed hit on player: %s", player );
 
             magnet.sendData( null, CHANNEL, CONFIRMED_HIT_TYPE, payload, new MagnetAgent.MagnetListener()
             {
@@ -1010,4 +1033,45 @@ public class MeshballApplication extends Application
             });
         }
     }
+
+    public void releaseService()
+    {
+        Log.mark( TAG );
+        magnet.releaseService();
+        magnet = null;
+    }
+
+    public boolean hasService()
+    {
+        return (magnet != null);
+    }
+
+    public boolean testService()
+    {
+        if ( magnet == null ) {
+
+            Log.d( TAG, "Magnet is NOT running, creating a new instance..." );
+
+            magnet = new MagnetAgentImpl();
+            magnet.initService(getApplicationContext(), serviceListener);
+            magnet.registerPublicChannelListener(channelListener);
+
+            return true;
+        }
+        else {
+            Log.d( TAG, "Magnet is running..." );
+            return false;
+        }
+    }
+
+    public void becomeInactive()
+    {
+        inactivityTimer = System.currentTimeMillis() + (30 * MINUTES);
+    }
+
+    public void becomeActive()
+    {
+        inactivityTimer = 0;
+    }
 }
+

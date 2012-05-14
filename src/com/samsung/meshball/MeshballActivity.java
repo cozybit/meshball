@@ -21,7 +21,6 @@ import android.widget.Toast;
 import com.samsung.meshball.data.Candidate;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
-import com.samsung.meshball.utils.WifiUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,7 +44,6 @@ public class MeshballActivity extends Activity
     private boolean inShot;
     private int shotCounter = 0;
 
-    private InactivityTimer inactivityTimer;
     private ImageButton fireButton;
     private TextView scoreLabel;
     private TextView reviewLabel;
@@ -191,7 +189,6 @@ public class MeshballActivity extends Activity
 
         this.configManager = new CameraConfigurationManager( getApplicationContext() );
 
-        inactivityTimer = new InactivityTimer( this );
         handler = new Handler();
 
         MeshballApplication app = (MeshballApplication) getApplication();
@@ -270,8 +267,19 @@ public class MeshballActivity extends Activity
     @Override
     protected void onDestroy()
     {
-        inactivityTimer.shutdown();
+        Log.mark( TAG );
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        Log.mark( TAG );
+
+        MeshballApplication app = (MeshballApplication) getApplication();
+        app.releaseService();
+
+        super.onBackPressed();
     }
 
     @Override
@@ -294,9 +302,10 @@ public class MeshballActivity extends Activity
             cameraPreview.startPreview();
         }
 
-        updateHUD();
+        MeshballApplication app = (MeshballApplication) getApplication();
+        app.becomeActive();
 
-        inactivityTimer.onResume();
+        updateHUD();
     }
 
     public void updateHUD()
@@ -323,7 +332,8 @@ public class MeshballActivity extends Activity
 
         releaseCamera();
 
-        inactivityTimer.onPause();
+        MeshballApplication app = (MeshballApplication) getApplication();
+        app.becomeInactive();
     }
 
     private void releaseCamera()
@@ -340,7 +350,6 @@ public class MeshballActivity extends Activity
         super.onStart();
 
         MeshballApplication app = (MeshballApplication) getApplication();
-        WifiUtils wifiUtils = app.getWifiUtils();
 
         if ( app.hasNoService() ) {
             String title = getString(R.string.dlg_noservice_title);
