@@ -5,10 +5,8 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.samsung.meshball.adapters.PlayerAdapter;
 
 /**
@@ -46,12 +44,6 @@ public class PlayersActivity extends Activity
 
         GridView gridview = (GridView) findViewById(R.id.player_grid);
         gridview.setAdapter(new PlayerAdapter(this));
-
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                Toast.makeText(PlayersActivity.this, "" + position, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override

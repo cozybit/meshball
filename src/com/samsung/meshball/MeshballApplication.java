@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
-import android.widget.Toast;
 import com.samsung.magnet.wrapper.MagnetAgent;
 import com.samsung.magnet.wrapper.MagnetAgentImpl;
 import com.samsung.meshball.data.Candidate;
@@ -42,6 +41,8 @@ public class MeshballApplication extends Application
     public static final String IDENTITY_TYPE = "com.samsung.meshball/identity";
     public static final String CONFIRMED_HIT_TYPE = "com.samsung.meshball/confirmed_hit";
 
+    public static final String REFRESH = "com.samsung.meshball/refresh";
+
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
     private boolean isReady = false;
@@ -59,6 +60,9 @@ public class MeshballApplication extends Application
     private String playerID = null;
     private int score = 0;
     private String statusMessage = "";
+
+    private int broadcastRetry = 0;
+    private long broadcastExpiry;
 
     private List<Candidate> reviewList = new ArrayList<Candidate>();
     private List<Candidate> confirmList = new ArrayList<Candidate>();
@@ -79,10 +83,15 @@ public class MeshballApplication extends Application
         @Override
         public void run()
         {
+            if ( (broadcastExpiry > 0) && ((broadcastExpiry - System.currentTimeMillis()) <= 0) ) {
+                broadcastExpiry = 0;
+                broadcastRetry = 0;
+            }
+
             if ( ! reviewing ) {
                 Iterator<Candidate> it = reviewList.iterator();
                 while ( it.hasNext() ) {
-                    Candidate candidate = it.next();
+                    final Candidate candidate = it.next();
                     if ( candidate.getPlayerID() != null ) {
 
                         // Let's rename our file to include the player's ID who we claim to have hit...
@@ -103,13 +112,23 @@ public class MeshballApplication extends Application
                                 @Override
                                 public void onFailure(int reason)
                                 {
-                                    Log.e( TAG, "FAILED to send file: reason = %d", reason );
-                                    Toast.makeText( getApplicationContext(), R.string.toast_failed_send_file, Toast.LENGTH_LONG ).show();
+                                    Log.e(TAG, "FAILED to send file: reason = %d", reason);
+
+                                    // Boo. Put it back so the next time around it is retried.
+
+                                    if ( candidate.getTryCounter() < 5 ) {
+                                        synchronized(this) {
+                                            reviewList.add( candidate );
+                                        }
+                                        candidate.incrementTryCounter();
+                                    }
                                 }
                             });
                         }
 
-                        it.remove();
+                        synchronized(this) {
+                            it.remove();
+                        }
                     }
                 }
             }
@@ -236,6 +255,10 @@ public class MeshballApplication extends Application
                     }
                 }
 
+                // Broadcast a refresh in case any activity is interested
+                Intent i = new Intent( MeshballApplication.REFRESH );
+                sendBroadcast( i );
+
                 statusMessage = getString( R.string.has_left, player.getScreenName());
 
                 handler.post(showStatus);
@@ -320,16 +343,14 @@ public class MeshballApplication extends Application
         public void onFileFailed(String fromNode, String fromChannel, String originalName,
                                  String hash, String exchangeId, int reason)
         {
-            Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
-            if ( fromChannel.equals( CHANNEL ) ) {
-
-            }
+            Log.i( TAG, "fromNode = %s, fromChannel = %s, originalName=%s, hash=%s, exchangeId=%s, reason=%d",
+                   fromNode, fromChannel, originalName, hash, exchangeId, reason );
         }
 
         @Override
         public void onFailure(int reason)
         {
-            Log.w(TAG, "Failure on channel.  Reason = %d", reason);
+            Log.e(TAG, "Failure on channel.  Reason = %d", reason);
         }
     };
 
@@ -365,6 +386,35 @@ public class MeshballApplication extends Application
         Log.i( TAG, "------------------------ New Meshball ------------------------" );
         super.onCreate();
 
+        // Cleanup all JPG and PNG files except for the profile
+        File path = MediaManager.getMediaStoragePath();
+        File[] list = path.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file)
+            {
+                if ( file.getName().equals( PROFILE_FILENAME ) ) {
+                    return false;
+                }
+
+                String parts[] = file.getName().split( "\\." );
+                if ( parts.length > 1 ) {
+                    String part = parts[parts.length - 1];
+                    if ( ".jpg".equalsIgnoreCase( part ) || ".png".equalsIgnoreCase( part ) ) {
+                        return true;
+                    }
+                }
+                return  false;
+            }
+        });
+
+        Log.i( TAG, "Cleaning up %d files...", list.length );
+
+        for ( File file : list ) {
+            if ( ! file.delete() ) {
+                Log.w( TAG, "Failed to delete file: %s", file );
+            }
+        }
+
         wifiUtils = new WifiUtils( this );
 
         magnet = new MagnetAgentImpl();
@@ -397,34 +447,6 @@ public class MeshballApplication extends Application
     {
         Log.i(TAG, "Cancelling timer tasks...");
         timer.cancel();
-
-        // Cleanup all JPG and PNG files except for the profile
-        File path = MediaManager.getMediaStoragePath();
-        File[] list = path.listFiles(new FileFilter()
-        {
-            @Override
-            public boolean accept(File file)
-            {
-                if ( file.getName().equals( PROFILE_FILENAME ) ) {
-                    return false;
-                }
-
-                String parts[] = file.getName().split( "\\." );
-                if ( parts.length > 1 ) {
-                    String part = parts[parts.length - 1];
-                    if ( ".jpg".equalsIgnoreCase( part ) || ".png".equalsIgnoreCase( part ) ) {
-                        return true;
-                    }
-                }
-                return  false;
-            }
-        });
-
-        for ( File file : list ) {
-            if ( ! file.delete() ) {
-                Log.w( TAG, "Failed to delete file: %s", file );
-            }
-        }
 
         Log.mark( TAG );
         super.onTerminate();
@@ -729,12 +751,27 @@ public class MeshballApplication extends Application
         payload.add( (playing ? new byte[] {1} : new byte[] {0}) );
         payload.add( bos.toByteArray() );
 
+        broadcastRetry++;
+
         magnet.sendData( null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
         {
             @Override
             public void onFailure(int reason)
             {
                 Log.e( TAG, "Failure broadcasting identity. Reason = %d", reason );
+
+                // Schedule it again...
+                handler.postDelayed( new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        if ( broadcastRetry < 5 ) {
+                            broadcastIdentity();
+                        }
+                        broadcastExpiry = System.currentTimeMillis() + 2000;
+                    }
+                }, 1000 );
             }
         });
     }
@@ -742,15 +779,11 @@ public class MeshballApplication extends Application
     private void handleWifiConnect()
     {
         isReady = true;
-
-        String ssid = wifiUtils.getWifiSSID();
-        boolean apMode = wifiUtils.isWifiApEnabled();
-
     }
 
     private void handleWifiDisconnect()
     {
-
+        isReady = false;
     }
 
     private void handleFile(final String originalName, final String tmp_path, final String shooterID, final String playerID)
@@ -846,11 +879,22 @@ public class MeshballApplication extends Application
             // Was it me who was hit?
             if ( hitID.equals( getPlayerID() ) ) {
                 leaveGame();
+
                 Intent intent = new Intent( meshballActivity, GameOverActivity.class );
                 intent.putExtra( "screen_name", shooter.getScreenName() );
                 meshballActivity.startActivity( intent );
             }
             else {
+                // We have duplicate code to remove players.
+                // Here, and in the onLeaveEvent
+
+                playersMap.remove( player.getPlayerID() );
+                players.remove( player );
+
+                // Broadcast a refresh in case any activity is interested
+                Intent i = new Intent( MeshballApplication.REFRESH );
+                sendBroadcast( i );
+
                 statusMessage = getString( R.string.hit_message, shooter.getScreenName(), player.getScreenName() );
             }
         }
@@ -943,25 +987,27 @@ public class MeshballApplication extends Application
     public void confirmedHit(Candidate beingReviewed)
     {
         Player player = playersMap.get( beingReviewed.getPlayerID() );
-        player.setHitBy( beingReviewed.getShooterID() );
-        player.setReviewedBy( getPlayerID() );
+        if ( player != null ) {
+            player.setHitBy( beingReviewed.getShooterID() );
+            player.setReviewedBy( getPlayerID() );
 
-        // Broadcast the confirmed hit!
-        List<byte[]> payload = new ArrayList<byte[]>();
+            // Broadcast the confirmed hit!
+            List<byte[]> payload = new ArrayList<byte[]>();
 
-        payload.add( beingReviewed.getPlayerID().getBytes() );
-        payload.add( beingReviewed.getShooterID().getBytes() );
-        payload.add( getPlayerID().getBytes() );
+            payload.add( beingReviewed.getPlayerID().getBytes() );
+            payload.add( beingReviewed.getShooterID().getBytes() );
+            payload.add( getPlayerID().getBytes() );
 
-        Log.d( TAG, "Broadcasting confirmed hit!" );
+            Log.d( TAG, "Broadcasting confirmed hit!" );
 
-        magnet.sendData( null, CHANNEL, CONFIRMED_HIT_TYPE, payload, new MagnetAgent.MagnetListener()
-        {
-            @Override
-            public void onFailure(int reason)
+            magnet.sendData( null, CHANNEL, CONFIRMED_HIT_TYPE, payload, new MagnetAgent.MagnetListener()
             {
-                Log.e( TAG, "Failure broadcasting confirmed hit. Reason = %d", reason );
-            }
-        });
+                @Override
+                public void onFailure(int reason)
+                {
+                    Log.e( TAG, "Failure broadcasting confirmed hit. Reason = %d", reason );
+                }
+            });
+        }
     }
 }

@@ -52,7 +52,6 @@ public class MeshballActivity extends Activity
     private TextView confirmLabel;
     private TextView statusMessageLabel;
     private ViewfinderView viewFinder;
-    private boolean fromCreate;
     private Handler handler;
 
     private Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback()
@@ -192,7 +191,6 @@ public class MeshballActivity extends Activity
 
         this.configManager = new CameraConfigurationManager( getApplicationContext() );
 
-        fromCreate = true;
         inactivityTimer = new InactivityTimer( this );
         handler = new Handler();
 
@@ -371,17 +369,6 @@ public class MeshballActivity extends Activity
                   app.getScreenName(), (app.isFirstTime() ? "YES" : "NO"));
             startActivity(new Intent(this, ProfileActivity.class));
         }
-
-        boolean isEnabled = wifiUtils.getWifiManager().isWifiEnabled() || wifiUtils.isWifiApEnabled();
-        if( !isEnabled || (!wifiUtils.isWifiApEnabled() && (wifiUtils.getWifiManager().getConnectionInfo().getSSID() == null))) {
-            if(fromCreate) {
-                displayFriendlyWifiDialog();
-            }
-            else {
-                displayDisabledWifiDialog();
-            }
-        }
-        fromCreate = false;
     }
 
     @Override
@@ -396,11 +383,12 @@ public class MeshballActivity extends Activity
     {
         menu.add(Menu.NONE, R.id.menu_players, 0, R.string.menu_players)
                 .setIcon(R.drawable.icon_action_players)
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                .setTitle("(3)")
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
         menu.add(Menu.NONE, R.id.menu_share, 1, R.string.menu_share)
-                .setIcon( R.drawable.icon_action_share )
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS );
+                .setIcon(R.drawable.icon_action_share)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         menu.add(Menu.NONE, R.id.menu_profile, 2, R.string.menu_profile)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);

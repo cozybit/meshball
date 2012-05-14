@@ -15,6 +15,7 @@ public class Candidate
     private File path;
     private String fileName;
     private String shooterID;
+    private int tryCounter = 0;
 
     public Candidate(String playerID, File path, String fileName)
     {
@@ -63,6 +64,16 @@ public class Candidate
     public String getShooterID()
     {
         return shooterID;
+    }
+
+    public void incrementTryCounter()
+    {
+        tryCounter++;
+    }
+
+    public int getTryCounter()
+    {
+        return tryCounter;
     }
 
     @Override

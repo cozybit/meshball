@@ -1,13 +1,17 @@
 package com.samsung.meshball;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import com.samsung.meshball.adapters.PlayerAdapter;
 import com.samsung.meshball.data.Candidate;
 import com.samsung.meshball.data.Player;
@@ -23,41 +27,73 @@ public class ReviewHitActivity extends Activity
 {
     private static final String TAG = ReviewHitActivity.class.getName();
 
-    private GridView gridview;
-    private ImageButton previousButton;
-    private ImageButton nextButton;
     private ImageView reviewImage;
     private ImageView checkMark;
+    private TextView remainingText;
+    private GridView gridview;
 
     private int viewingIdx = 0;
+    private int remainingCnt = 0;
+    private Handler handler = new Handler();
+    private Runnable runnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            nextCandidate();
+        }
+    };
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive( final Context context, Intent intent) {
+            Log.d( TAG, "BroadcastReceiver:onReceive : %s", intent );
+            String action = intent.getAction();
+
+            if ( action.equalsIgnoreCase( MeshballApplication.REFRESH ) ) {
+                gridview.refreshDrawableState();
+            }
+        }
+    };
 
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView( R.layout.review_player );
+        setContentView(R.layout.review_player);
 
         final MeshballApplication app = (MeshballApplication) getApplication();
         app.setReviewing( true );
 
+        registerReceiver(broadcastReceiver, new IntentFilter(MeshballApplication.REFRESH));
+
         gridview = (GridView) findViewById(R.id.player_grid);
         gridview.setAdapter(new PlayerAdapter(this));
 
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id)
+            {
+                if ( position <= (app.getPlayers().size() - 1) ) {
+                    Player player = app.getPlayers().get(position);
+                    Candidate candidate = app.getReviewList().get(viewingIdx);
+                    candidate.setPlayerID(player.getPlayerID());
 
-                checkMark.setVisibility( View.VISIBLE );
-                Player player = app.getPlayers().get( position );
-                Candidate candidate = app.getReviewList().get( viewingIdx );
-                candidate.setPlayerID( player.getPlayerID() );
+                    checkMark.setVisibility(View.VISIBLE);
+
+                    // Delay the update a bit so the user can see the red check mark...
+                    handler.postDelayed(runnable, 500);
+                }
+                else {
+                    // Player has left while being selected, make sure the grid view is refreshed to match the adapter.
+                    gridview.refreshDrawableState();
+                }
             }
         });
 
-        previousButton = (ImageButton) findViewById( R.id.previous_button );
-        nextButton = (ImageButton) findViewById( R.id.next_button );
+        remainingCnt = app.getReviewList().size() - 1;
 
-        if ( app.getReviewList().size() > 1 ) {
-            nextButton.setVisibility( View.VISIBLE );
-        }
+        remainingText = (TextView) findViewById( R.id.review_subtext_label );
+        remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
 
         reviewImage = (ImageView) findViewById( R.id.review_picture );
         Candidate candidate = app.getReviewList().get(0);
@@ -75,6 +111,13 @@ public class ReviewHitActivity extends Activity
     }
 
     @Override
+    protected void onDestroy()
+    {
+        unregisterReceiver(broadcastReceiver);
+        super.onDestroy();
+    }
+
+    @Override
     public void onBackPressed()
     {
         MeshballApplication app = (MeshballApplication) getApplication();
@@ -83,22 +126,22 @@ public class ReviewHitActivity extends Activity
         super.onBackPressed();
     }
 
-    public void previousPressed(View v)
-    {
-        viewingIdx--;
-        displayReviewImage();
-    }
-
-    public void nextPressed(View v)
-    {
-        viewingIdx++;
-        displayReviewImage();
-    }
-
-    private void displayReviewImage()
+    private void nextCandidate()
     {
         MeshballApplication app = (MeshballApplication) getApplication();
         List<Candidate> reviewList = app.getReviewList();
+
+        viewingIdx++;
+        if ( viewingIdx > (reviewList.size() - 1) ) {
+            app.setReviewing( false );
+            finish();
+            return;
+        }
+
+        remainingCnt--;
+
+        checkMark.setVisibility( View.INVISIBLE );
+        remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
 
         Candidate candidate = reviewList.get( viewingIdx );
         try {
@@ -106,34 +149,6 @@ public class ReviewHitActivity extends Activity
         }
         catch(IOException e) {
             Log.e(TAG, e, "%s - Failed to load candidate bitmap: %s", e.getMessage(), candidate);
-        }
-
-        String playerID = candidate.getPlayerID();
-        if ( playerID != null ) {
-            int idx = app.findPlayer( playerID );
-            // Scroll to that grid cell
-            gridview.smoothScrollToPosition( idx );
-            checkMark.setVisibility( View.VISIBLE );
-        }
-        else {
-            checkMark.setVisibility( View.INVISIBLE );
-        }
-
-        if ( viewingIdx == 0 ) {
-            previousButton.setVisibility( View.INVISIBLE );
-        }
-
-        if ( viewingIdx < (reviewList.size() - 1) ) {
-            nextButton.setVisibility( View.VISIBLE );
-        }
-
-        if ( viewingIdx >= (reviewList.size() - 1) ) {
-            nextButton.setVisibility( View.INVISIBLE );
-            viewingIdx = (reviewList.size() - 1);
-        }
-
-        if ( viewingIdx > 0 ) {
-            previousButton.setVisibility( View.VISIBLE );
         }
     }
 
@@ -152,13 +167,6 @@ public class ReviewHitActivity extends Activity
         }
     }
 
-    public void donePressed(View v)
-    {
-        MeshballApplication app = (MeshballApplication) getApplication();
-        app.setReviewing( false );
-        finish();
-    }
-
     public void rejectPressed(View v)
     {
         MeshballApplication app = (MeshballApplication) getApplication();
@@ -173,7 +181,7 @@ public class ReviewHitActivity extends Activity
             if ( viewingIdx > (reviewList.size() - 1) ) {
                 viewingIdx = (reviewList.size() - 1);
             }
-            displayReviewImage();
+            nextCandidate();
         }
     }
 }

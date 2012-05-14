@@ -102,6 +102,7 @@
     
     <!-- review_player.xml -->
     <string name="review_lbl_txt">Review Hit</string>
+    <string name="review_lbl_subtext">(%d remaining)</string>
     <string name="hint_labl_txt">Scroll through list and match the player:</string>
     <string name="hint_labl2_txt">Click on the player to \'Hit\' them</string>
     <string name="review_done_button">Done</string>

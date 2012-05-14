@@ -11,19 +11,31 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_alignParentTop="true"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="7dp"
             android:textColor="@color/solid_black"
             android:text="@string/review_lbl_txt"
             android:textStyle="bold"
-            android:textSize="20sp">
+            android:textSize="26sp">
+    </TextView>
+
+    <TextView
+            android:id="@+id/review_subtext_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/review_label"
+            android:textColor="@color/solid_black"
+            android:text="@string/review_lbl_subtext"
+            android:textSize="16sp">
     </TextView>
 
     <RelativeLayout android:id="@+id/review_layout"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
+                  android:layout_marginTop="10dp"
                   android:orientation="horizontal"
                   android:layout_centerHorizontal="true"
-                  android:layout_below="@id/review_label">
+                  android:layout_below="@id/review_subtext_label">
 
         <ImageView
                 android:id="@+id/review_picture"
@@ -57,36 +69,13 @@
 
     </RelativeLayout>
 
-    <ImageButton android:id="@+id/previous_button"
-                 android:layout_width="wrap_content"
-                 android:layout_height="140dp"
-                 android:layout_marginTop="5dp"
-                 android:src="@drawable/left_button"
-                 android:background="@null"
-                 android:onClick="previousPressed"
-                 android:visibility="invisible"
-                 android:layout_below="@id/review_label"
-                 android:layout_toLeftOf="@id/review_layout" />
-
-    <ImageButton android:id="@+id/next_button"
-                 android:layout_width="wrap_content"
-                 android:layout_height="140dp"
-                 android:layout_marginTop="5dp"
-                 android:src="@drawable/right_button"
-                 android:background="@null"
-                 android:onClick="nextPressed"
-                 android:visibility="invisible"
-                 android:layout_below="@id/review_label"
-                 android:layout_toRightOf="@id/review_layout" />
-
-
     <TextView
             android:id="@+id/hint_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/review_layout"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="15dp"
             android:layout_marginBottom="5dp"
             android:textColor="@color/solid_black"
             android:text="@string/hint_labl_txt"
@@ -118,15 +107,5 @@
             android:text="@string/hint_labl2_txt"
             android:textSize="14sp">
     </TextView>
-
-
-    <Button android:id="@+id/review_done_button"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="5dp"
-            android:layout_centerHorizontal="true"
-            android:onClick="donePressed"
-            android:text="@string/review_done_button"/>
 
 </RelativeLayout>
