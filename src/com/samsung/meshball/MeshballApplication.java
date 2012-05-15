@@ -56,7 +56,7 @@ public class MeshballApplication extends Application
 
     private Bitmap tempProfileImage;
     private Bitmap profileImage;
-    private boolean defaultImage;
+    private boolean usingDefaultImage = false;
     private String screenName;
     private boolean firstTime;
     private String playerID = null;
@@ -541,16 +541,17 @@ public class MeshballApplication extends Application
 
     public boolean usingDefaultImage()
     {
-        return defaultImage;
+        return usingDefaultImage;
     }
 
     public Bitmap getProfileImage()
     {
         if (profileImage == null) {
             Bitmap image = null;
-            defaultImage = false;
+
             try {
                 image = MediaManager.loadBitmapImage(PROFILE_FILENAME);
+                usingDefaultImage = false;
             }
             catch (IOException e) {
                 Log.e(TAG, e, "Caught Exception: %s", e.getMessage());
@@ -561,7 +562,7 @@ public class MeshballApplication extends Application
                 Resources res = getResources();
                 Drawable defaultDrawable = res.getDrawable(R.drawable.missing_profile);
                 image = ((BitmapDrawable) defaultDrawable).getBitmap();
-                defaultImage = true;
+                usingDefaultImage = true;
             }
 
             profileImage = image;
@@ -578,6 +579,7 @@ public class MeshballApplication extends Application
      */
     public void setProfileImage(Bitmap image)
     {
+        usingDefaultImage = false;
         Log.mark(TAG);
         /*
          * Write out the profile image

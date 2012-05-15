@@ -267,7 +267,7 @@ public class MeshballActivity extends Activity
     @Override
     protected void onDestroy()
     {
-        Log.mark( TAG );
+        Log.mark(TAG);
         super.onDestroy();
     }
 
@@ -397,7 +397,7 @@ public class MeshballActivity extends Activity
 
         menu.add(Menu.NONE, R.id.menu_share, 1, R.string.menu_share)
                 .setIcon(R.drawable.icon_action_share)
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
         menu.add(Menu.NONE, R.id.menu_profile, 2, R.string.menu_profile)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
