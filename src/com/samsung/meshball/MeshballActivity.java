@@ -194,6 +194,7 @@ public class MeshballActivity extends Activity
         MeshballApplication app = (MeshballApplication) getApplication();
         app.loadPreferences();
         app.setMeshballActivity( this );
+        app.testService();
 
         preview = (FrameLayout) findViewById( R.id.preview_view );
         scoreLabel = (TextView) findViewById( R.id.score_label );

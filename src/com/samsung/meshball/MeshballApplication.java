@@ -443,8 +443,6 @@ public class MeshballApplication extends Application
 
         wifiUtils = new WifiUtils( this );
 
-        testService();
-
         // Add some players
 
 //        for ( int i = 0; i < 10; i++ ) {
