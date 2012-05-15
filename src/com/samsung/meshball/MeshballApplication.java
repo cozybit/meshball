@@ -61,7 +61,6 @@ public class MeshballApplication extends Application
     private boolean firstTime;
     private String playerID = null;
     private int score = 0;
-    private String statusMessage = "";
 
     private int broadcastRetry = 0;
     private long broadcastExpiry;
@@ -127,7 +126,7 @@ public class MeshballApplication extends Application
                         newName.append( candidate.getFileName() );
 
                         File from = new File( candidate.getPath(), candidate.getFileName() );
-                        File to = new File(  candidate.getPath(), newName.toString() );
+                        final File to = new File(  candidate.getPath(), newName.toString() );
 
                         if ( ! from.renameTo( to ) ) {
                             Log.e( TAG, "Failed to rename %s to %s", from, to );
@@ -138,49 +137,15 @@ public class MeshballApplication extends Application
                                 @Override
                                 public void onFailure(int reason)
                                 {
-                                    Log.e(TAG, "FAILED to send file: reason = %d", reason);
-
-                                    // Boo. Put it back so the next time around it is retried.
-
-                                    if ( candidate.getTryCounter() < 5 ) {
-                                        synchronized(this) {
-                                            reviewList.add( candidate );
-                                        }
-                                        candidate.incrementTryCounter();
-                                    }
+                                    // Booooo!!!!
+                                    Log.e(TAG, "FAILED to send file: %s, reason = %d", to, reason);
                                 }
                             });
                         }
 
-                        synchronized(this) {
-                            it.remove();
-                        }
+                        it.remove();
                     }
                 }
-            }
-        }
-    };
-
-    private Runnable hideStatus = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            if ( meshballActivity != null ) {
-                meshballActivity.hideHitMessage();
-            }
-        }
-    };
-
-    private Runnable showStatus = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            meshballActivity.updateHUD();
-
-            if ( meshballActivity != null ) {
-                meshballActivity.setHitMessage(statusMessage);
             }
         }
     };
@@ -285,10 +250,9 @@ public class MeshballApplication extends Application
                 Intent i = new Intent( MeshballApplication.REFRESH );
                 sendBroadcast( i );
 
-                statusMessage = getString( R.string.has_left, player.getScreenName());
-
-                handler.post(showStatus);
-                handler.postDelayed(hideStatus, 3000 );
+                if ( meshballActivity != null ) {
+                    meshballActivity.showMessage(getString( R.string.has_left, player.getScreenName()));
+                }
             }
         }
 
@@ -503,6 +467,14 @@ public class MeshballApplication extends Application
         playersMap.put( player.getPlayerID(), player );
         if ( ! players.contains( player ) && ! player.isMe()) {
             players.add( player );
+
+            handler.post( new Runnable() {
+                @Override
+                public void run()
+                {
+                    meshballActivity.updateHUD();
+                }
+            } );
         }
     }
 
@@ -893,6 +865,8 @@ public class MeshballApplication extends Application
 
         // TODO: Add interval tree clock to resolve multiple claims on the hit!!!
 
+        String statusMessage = null;
+
         // Do I get the credit for the hit?
         if ( shooterID.equals( getPlayerID() ) ) {
             statusMessage = getString( R.string.hit_message_credit, player.getScreenName() );
@@ -922,8 +896,9 @@ public class MeshballApplication extends Application
             }
         }
 
-        handler.post(showStatus);
-        handler.postDelayed(hideStatus, 3000 );
+        if ( (meshballActivity != null) && (statusMessage != null) ) {
+            meshballActivity.showMessage(statusMessage);
+        }
     }
 
     private void handleIdentity(String fromNode, List<byte[]> payload)
@@ -942,10 +917,9 @@ public class MeshballApplication extends Application
             player = new Player( playerID );
             addPlayer( player );
 
-            statusMessage = getString(R.string.has_joined, name);
-
-            handler.post(showStatus);
-            handler.postDelayed(hideStatus, 3000);
+            if ( meshballActivity != null ) {
+                meshballActivity.showMessage(getString(R.string.has_joined, name));
+            }
         }
 
         player.setScreenName( name );

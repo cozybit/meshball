@@ -73,9 +73,17 @@ public class ReviewHitActivity extends Activity
         {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id)
             {
-                if ( position <= (app.getPlayers().size() - 1) ) {
+                if ( (position < app.getPlayers().size()) ) {
                     Player player = app.getPlayers().get(position);
-                    Candidate candidate = app.getReviewList().get(viewingIdx);
+
+                    // Check...
+                    List<Candidate> reviewList = app.getReviewList();
+                    if ( viewingIdx >= reviewList.size() ) {
+                        Log.w( TAG, "INCONSISTENCY - viewIdx = %d, reviewList.size() = %d", viewingIdx, reviewList.size() );
+                        return;
+                    }
+
+                    Candidate candidate = reviewList.get(viewingIdx);
                     candidate.setPlayerID(player.getPlayerID());
 
                     checkMark.setVisibility(View.VISIBLE);
@@ -139,9 +147,9 @@ public class ReviewHitActivity extends Activity
         }
 
         remainingCnt--;
+        remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
 
         checkMark.setVisibility( View.INVISIBLE );
-        remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
 
         Candidate candidate = reviewList.get( viewingIdx );
         try {
@@ -171,7 +179,9 @@ public class ReviewHitActivity extends Activity
     {
         MeshballApplication app = (MeshballApplication) getApplication();
         List<Candidate> reviewList = app.getReviewList();
+
         reviewList.remove( viewingIdx );
+        remainingCnt--;
 
         if ( reviewList.size() == 0 ) {
             app.setReviewing( false );
@@ -181,7 +191,16 @@ public class ReviewHitActivity extends Activity
             if ( viewingIdx > (reviewList.size() - 1) ) {
                 viewingIdx = (reviewList.size() - 1);
             }
-            nextCandidate();
+
+            remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
+
+            Candidate candidate = reviewList.get( viewingIdx );
+            try {
+                reviewImage.setImageBitmap( candidate.getBitmap() );
+            }
+            catch(IOException e) {
+                Log.e(TAG, e, "%s - Failed to load candidate bitmap: %s", e.getMessage(), candidate);
+            }
         }
     }
 }

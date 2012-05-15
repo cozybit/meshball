@@ -43,14 +43,35 @@ public class MeshballActivity extends Activity
     private Bitmap splatter;
     private boolean inShot;
     private int shotCounter = 0;
+    private String statusMessage = "";
 
     private ImageButton fireButton;
     private TextView scoreLabel;
+    private TextView playersLabel;
     private TextView reviewLabel;
     private TextView confirmLabel;
     private TextView statusMessageLabel;
     private ViewfinderView viewFinder;
     private Handler handler;
+
+    private Runnable hideStatus = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            hideHitMessage();
+        }
+    };
+
+    private Runnable showStatus = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            updateHUD();
+            setHitMessage(statusMessage);
+        }
+    };
 
     private Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback()
     {
@@ -198,6 +219,7 @@ public class MeshballActivity extends Activity
 
         preview = (FrameLayout) findViewById( R.id.preview_view );
         scoreLabel = (TextView) findViewById( R.id.score_label );
+        playersLabel = (TextView) findViewById( R.id.players_label );
         fireButton = (ImageButton) findViewById( R.id.fire_button );
 
         reviewLabel = (TextView) findViewById( R.id.review_counter );
@@ -323,6 +345,7 @@ public class MeshballActivity extends Activity
 
         confirmLabel.setText(String.valueOf(app.getConfirmList().size()));
         scoreLabel.setText(getString(R.string.score_lbl_txt, app.getScore()));
+        playersLabel.setText(getString(R.string.players_lbl_txt, app.getPlayers().size()));
     }
 
     @Override
@@ -477,7 +500,12 @@ public class MeshballActivity extends Activity
     public void fireShot()
     {
         MeshballApplication app = (MeshballApplication) getApplication();
-        if ( ! app.isPlaying() ) {
+        if ( ! app.isPlaying() || (app.getPlayers().size() == 0) )  {
+
+            showMessage( getString(R.string.no_players_yet) );
+
+            Log.d( TAG, "Not playing or no players.  Playing = %s, getPlayers().size() = %d",
+                   (app.isPlaying() ? "YES" : "NO"), app.getPlayers().size());
             return;
         }
 
@@ -712,6 +740,13 @@ public class MeshballActivity extends Activity
     public void hideHitMessage()
     {
         statusMessageLabel.setVisibility(View.INVISIBLE);
+    }
+
+    public void showMessage(String message)
+    {
+        statusMessage = message;
+        handler.post(showStatus);
+        handler.postDelayed(hideStatus, 3000 );
     }
 
     public void setHitMessage( String message )
