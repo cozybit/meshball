@@ -12,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -88,12 +87,11 @@ public class MeshballActivity extends Activity
         @Override
         public void onPictureTaken(byte[] data, Camera camera)
         {
-            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+            Log.d(TAG, "jpegPictureCallback: Size: %d", (data != null ? data.length : 0));
 
             camera.stopPreview();
 
             if ( data != null ) {
-
                 viewFinder.setSplatter( splatter );
 
                 Bitmap image = BitmapFactory.decodeByteArray(data, 0, data.length);
@@ -149,6 +147,16 @@ public class MeshballActivity extends Activity
             }
 
             inShot = false;
+
+            // Set timer to clear the shot!
+            handler.postDelayed( new Runnable() {
+                @Override
+                public void run()
+                {
+                    Log.mark( TAG );
+                    clearShot();
+                }
+            }, 500 );
         }
     };
 
@@ -157,7 +165,7 @@ public class MeshballActivity extends Activity
         @Override
         public void onPictureTaken(byte[] data, Camera camera)
         {
-            Log.d(TAG, "Size: %d", (data != null ? data.length : 0));
+            Log.d(TAG, "rawPictureCallback: Size: %d", (data != null ? data.length : 0));
 
             // Ignore the raw picture..
             if ( data != null ) {
@@ -173,29 +181,6 @@ public class MeshballActivity extends Activity
             Log.mark( TAG );
         }
     };
-
-    private Camera getCameraInstance() {
-        Camera c = null;
-
-        try
-        {
-            c = Camera.open();
-            if ( c == null ) {
-                displayFrameworkBugMessageAndExit();
-            }
-        }
-        catch ( RuntimeException e )
-        {
-            Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
-            displayFrameworkBugMessageAndExit();
-        }
-        catch(Exception e) {
-            Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
-            displayFrameworkBugMessageAndExit();
-        }
-
-        return c;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -269,15 +254,6 @@ public class MeshballActivity extends Activity
 
                     if ( ! inShot ) {
                         fireShot();
-
-                        // Set timer to clear the shot!
-                        handler.postDelayed( new Runnable() {
-                            @Override
-                            public void run()
-                            {
-                                clearShot();
-                            }
-                        }, 2000 );
                     }
 
                     return true;
@@ -311,24 +287,49 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onResume();
 
-        Camera camera = getCameraInstance();
-        if ( camera != null ) {
-            if ( ! configManager.isInitialized() ) {
-                configManager.initFromCameraParameters(camera);
-            }
-            configManager.setDesiredCameraParameters( camera );
-
-            preview.removeAllViews();
-            cameraPreview = new CameraPreview(this, camera);
-            preview.addView(cameraPreview, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) );
-
-            cameraPreview.startPreview();
-        }
-
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeActive();
 
         updateHUD();
+    }
+
+    private void openCamera()
+    {
+        Thread t = new Thread( new Runnable() {
+            @Override
+            public void run()
+            {
+                try {
+                    final Camera camera = Camera.open();
+                    if ( camera != null ) {
+                        Log.d( TAG, "Camera is open, configuring..." );
+                        if ( ! configManager.isInitialized() ) {
+                            configManager.initFromCameraParameters(camera);
+                        }
+                        configManager.setDesiredCameraParameters(camera);
+                    }
+
+                    handler.post(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            onCameraReady(camera);
+                        }
+                    });
+                }
+                catch ( RuntimeException e ) {
+                    Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
+                    displayFrameworkBugMessageAndExit();
+                }
+                catch(Exception e) {
+                    Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
+                    displayFrameworkBugMessageAndExit();
+                }
+            }
+        } );
+        t.setPriority( Thread.MAX_PRIORITY );
+        t.start();
     }
 
     public void updateHUD()
@@ -354,8 +355,6 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onPause();
 
-        releaseCamera();
-
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeInactive();
     }
@@ -368,12 +367,22 @@ public class MeshballActivity extends Activity
     }
 
     @Override
+    protected void onStop()
+    {
+        Log.mark( TAG );
+        super.onStop();
+        releaseCamera();
+    }
+
+    @Override
     protected void onStart()
     {
         Log.mark(TAG);
         super.onStart();
 
         MeshballApplication app = (MeshballApplication) getApplication();
+
+        openCamera();
 
         if ( app.hasNoService() ) {
             String title = getString(R.string.dlg_noservice_title);
@@ -501,9 +510,7 @@ public class MeshballActivity extends Activity
     {
         MeshballApplication app = (MeshballApplication) getApplication();
         if ( ! app.isPlaying() || (app.getPlayers().size() == 0) )  {
-
             showMessage( getString(R.string.no_players_yet) );
-
             Log.d( TAG, "Not playing or no players.  Playing = %s, getPlayers().size() = %d",
                    (app.isPlaying() ? "YES" : "NO"), app.getPlayers().size());
             return;
@@ -537,10 +544,14 @@ public class MeshballActivity extends Activity
                 }
             }
         }
+        else {
+            Log.w( TAG, "WARNING - CameraPreview is null..." );
+        }
     }
 
     public void clearShot()
     {
+        Log.mark( TAG );
         viewFinder.clearSplatter();
         if ( cameraPreview != null ) {
             cameraPreview.startPreview();
@@ -585,44 +596,6 @@ public class MeshballActivity extends Activity
                     }
                 })
                 .setCancelable(true);
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    public void displayFriendlyWifiDialog()
-    {
-        // Let's go ahead and ask for the details and then store them.  This will make it easier to
-        // transmit securely to other devices.
-
-        displayDisabledWifiDialog();
-    }
-
-    public void displayDisabledWifiDialog()
-    {
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int which)
-            {
-                switch(which) {
-                    case DialogInterface.BUTTON_POSITIVE:
-                        // Refresh the lists
-                        Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                        startActivity(intent);
-                        break;
-
-                    case DialogInterface.BUTTON_NEGATIVE:
-                        break;
-                }
-            }
-        };
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.dlg_disabled_wifi_message)
-                .setTitle(R.string.warning)
-                .setCancelable(false)
-                .setPositiveButton(R.string.settings, listener)
-                .setNegativeButton(R.string.no, listener);
         AlertDialog alert = builder.create();
         alert.show();
     }
@@ -678,7 +651,7 @@ public class MeshballActivity extends Activity
     private void displayFrameworkBugMessageAndExit()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder( this );
-        builder.setTitle( getString( R.string.app_name ) );
+        builder.setTitle(getString(R.string.app_name));
         builder.setMessage( getString( R.string.msg_camera_framework_bug ) );
         builder.setPositiveButton( R.string.okay, new FinishListener( this ) );
         builder.setOnCancelListener( new FinishListener( this ) );
@@ -689,12 +662,12 @@ public class MeshballActivity extends Activity
     {
         if ( framingRect == null )
         {
-            if ( (cameraPreview == null) || (cameraPreview.getCamera() == null) )
-            {
+            Point screenResolution = configManager.getScreenResolution();
+            if ( screenResolution == null ) {
+                Log.d( TAG, "screenResolution = null" );
                 return null;
             }
 
-            Point screenResolution = configManager.getScreenResolution();
             int width = screenResolution.x * 3 / 4;
             if ( width < MIN_FRAME_WIDTH )
             {
@@ -753,5 +726,22 @@ public class MeshballActivity extends Activity
     {
         statusMessageLabel.setText(message);
         statusMessageLabel.setVisibility(View.VISIBLE);
+    }
+
+    private void onCameraReady(Camera camera)
+    {
+        Log.mark( TAG );
+
+        if ( ! configManager.isInitialized() ) {
+            configManager.initFromCameraParameters(camera);
+        }
+        configManager.setDesiredCameraParameters( camera );
+        viewFinder.refreshDrawableState();
+
+        preview.removeAllViews();
+        cameraPreview = new CameraPreview(this, camera);
+        preview.addView(cameraPreview,
+                        new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                                   ViewGroup.LayoutParams.MATCH_PARENT));
     }
 }

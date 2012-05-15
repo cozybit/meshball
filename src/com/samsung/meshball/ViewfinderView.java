@@ -24,6 +24,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
+import com.samsung.meshball.utils.Log;
 
 /**
  * This view is overlaid on top of the camera preview. It adds the viewfinder rectangle and partial
@@ -34,6 +35,7 @@ import android.view.View;
 public final class ViewfinderView
         extends View
 {
+    private static final String TAG = ViewfinderView.class.getName();
 
     private static final int[] SCANNER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
     private static final long ANIMATION_DELAY = 80L;
@@ -73,12 +75,15 @@ public final class ViewfinderView
     public void onDraw(Canvas canvas)
     {
         if(meshballActivity == null) {
+            Log.d( TAG, "meshballActivity is NULL!" );
             return;
         }
         Rect frame = meshballActivity.getFramingRect();
         if(frame == null) {
+            Log.d( TAG, "frame is NULL!" );
             return;
         }
+
         int width = canvas.getWidth();
         int height = canvas.getHeight();
 

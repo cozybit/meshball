@@ -98,7 +98,7 @@
     <!-- main.xml -->
     <string name="review_counter_txt">0</string>
     <string name="score_lbl_txt">Score: %d</string>
-    <string name="players_lbl_txt">Players: %d</string>
+    <string name="players_lbl_txt">Opponents: %d</string>
     <string name="confirm_counter_txt">0</string>
 
     <string name="no_players_yet">No players yet…</string>

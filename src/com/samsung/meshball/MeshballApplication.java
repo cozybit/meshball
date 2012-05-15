@@ -247,11 +247,12 @@ public class MeshballApplication extends Application
                 }
 
                 // Broadcast a refresh in case any activity is interested
-                Intent i = new Intent( MeshballApplication.REFRESH );
-                sendBroadcast( i );
+                Intent intent = new Intent( MeshballApplication.REFRESH );
+                intent.putExtra("player_id", player.getPlayerID());
+                sendBroadcast(intent);
 
                 if ( meshballActivity != null ) {
-                    meshballActivity.showMessage(getString( R.string.has_left, player.getScreenName()));
+                    meshballActivity.showMessage(getString(R.string.has_left, player.getScreenName()));
                 }
             }
         }
@@ -889,8 +890,9 @@ public class MeshballApplication extends Application
                 players.remove( player );
 
                 // Broadcast a refresh in case any activity is interested
-                Intent i = new Intent( MeshballApplication.REFRESH );
-                sendBroadcast( i );
+                Intent intent = new Intent( MeshballApplication.REFRESH );
+                intent.putExtra("player_id", player.getPlayerID());
+                sendBroadcast( intent );
 
                 statusMessage = getString( R.string.hit_message, shooter.getScreenName(), player.getScreenName() );
             }

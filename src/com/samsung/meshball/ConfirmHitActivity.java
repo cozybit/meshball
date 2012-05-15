@@ -1,6 +1,10 @@
 package com.samsung.meshball;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -27,10 +31,43 @@ public class ConfirmHitActivity
     private TextView remainingMessage;
     private Candidate beingReviewed;
 
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive( final Context context, Intent intent) {
+            Log.d( TAG, "BroadcastReceiver:onReceive : %s", intent );
+            String action = intent.getAction();
+
+            if ( action.equalsIgnoreCase( MeshballApplication.REFRESH ) ) {
+                String playerID = intent.getStringExtra( "player_id" );
+
+                if ( playerID != null ) {
+
+                    if ( playerID.equals( beingReviewed.getPlayerID() ) ) {
+                        Log.d( TAG, "Player %s being reviewed was hit and/or left the game...", playerID );
+                        nextCandidate();
+                    }
+
+                    // Now remove all from the queue...
+                    MeshballApplication app = (MeshballApplication) getApplication();
+                    Iterator<Candidate> it = app.getConfirmList().iterator();
+                    while( it.hasNext() ) {
+                        Candidate candidate = it.next();
+                        if ( playerID.equals(candidate.getPlayerID()) ) {
+                            it.remove();
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView( R.layout.confirm_hit );
+
+        registerReceiver(broadcastReceiver, new IntentFilter(MeshballApplication.REFRESH));
 
         confirmImage = (ImageView) findViewById( R.id.confirm_image );
         withImage = (ImageView) findViewById( R.id.with_image );
@@ -38,6 +75,13 @@ public class ConfirmHitActivity
         remainingMessage = (TextView) findViewById( R.id.confirm_remaining_label );
 
         nextCandidate();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        unregisterReceiver(broadcastReceiver);
+        super.onDestroy();
     }
 
     private void nextCandidate()

@@ -37,21 +37,28 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
+        Log.mark( TAG );
         try {
             if ( camera != null ) {
                 camera.setPreviewDisplay(holder);
                 camera.startPreview();
             }
+            else {
+                Log.w( TAG, "Camera is null!" );
+            }
         }
         catch (IOException e) {
-            Log.d(TAG, e, "Error setting camera preview: ", e.getMessage());
+            Log.e(TAG, e, "Error setting camera preview: ", e.getMessage());
         }
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
     {
+        Log.mark( TAG );
+
         if ( (holder == null) || (camera == null) ) {
+            Log.w( TAG, "holder is null (%s) or camera is null (%s)", (holder == null ? "YES" : "NO"), (camera == null ? "YES" : "NO") );
             return;
         }
 
@@ -75,12 +82,17 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceDestroyed(SurfaceHolder holder)
     {
         // Empty - Release the camera preview in the main activity
+        Log.mark( TAG );
     }
 
     public void startPreview()
     {
+        Log.mark( TAG );
         if ( camera != null ) {
             camera.startPreview();
+        }
+        else {
+            Log.w( TAG, "Camera is null..." );
         }
     }
 
@@ -98,6 +110,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void releaseCamera()
     {
+        Log.mark( TAG );
+
         if ( camera != null ) {
             camera.release();
             camera = null;
