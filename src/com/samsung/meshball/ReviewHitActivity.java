@@ -31,9 +31,8 @@ public class ReviewHitActivity extends Activity
     private ImageView checkMark;
     private TextView remainingText;
     private GridView gridview;
+    private PlayerAdapter playerAdapter;
 
-    private int viewingIdx = 0;
-    private int remainingCnt = 0;
     private Handler handler = new Handler();
     private Runnable runnable = new Runnable()
     {
@@ -51,7 +50,8 @@ public class ReviewHitActivity extends Activity
             String action = intent.getAction();
 
             if ( action.equalsIgnoreCase( MeshballApplication.REFRESH ) ) {
-                gridview.refreshDrawableState();
+                playerAdapter.notifyDataSetChanged();
+                gridview.invalidateViews();
             }
         }
     };
@@ -66,8 +66,10 @@ public class ReviewHitActivity extends Activity
 
         registerReceiver(broadcastReceiver, new IntentFilter(MeshballApplication.REFRESH));
 
+        playerAdapter = new PlayerAdapter(this);
+
         gridview = (GridView) findViewById(R.id.player_grid);
-        gridview.setAdapter(new PlayerAdapter(this));
+        gridview.setAdapter(playerAdapter);
 
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
@@ -78,13 +80,16 @@ public class ReviewHitActivity extends Activity
 
                     // Check...
                     List<Candidate> reviewList = app.getReviewList();
-                    if ( viewingIdx >= reviewList.size() ) {
-                        Log.w( TAG, "INCONSISTENCY - viewIdx = %d, reviewList.size() = %d", viewingIdx, reviewList.size() );
+                    if ( reviewList.size() == 0 ) {
+                        Log.w( TAG, "INCONSISTENCY - reviewList.size() == 0" );
                         return;
                     }
 
-                    Candidate candidate = reviewList.get(viewingIdx);
+                    Candidate candidate = reviewList.get(0);
                     candidate.setPlayerID(player.getPlayerID());
+                    app.sendHit(candidate);
+
+                    reviewList.remove( 0 );
 
                     checkMark.setVisibility(View.VISIBLE);
 
@@ -98,7 +103,7 @@ public class ReviewHitActivity extends Activity
             }
         });
 
-        remainingCnt = app.getReviewList().size() - 1;
+        int remainingCnt = app.getReviewList().size() - 1;
 
         remainingText = (TextView) findViewById( R.id.review_subtext_label );
         remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
@@ -138,20 +143,16 @@ public class ReviewHitActivity extends Activity
     {
         MeshballApplication app = (MeshballApplication) getApplication();
         List<Candidate> reviewList = app.getReviewList();
-
-        viewingIdx++;
-        if ( viewingIdx > (reviewList.size() - 1) ) {
+        if ( reviewList.size() == 0 ) {
             app.setReviewing( false );
             finish();
             return;
         }
 
-        remainingCnt--;
-        remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
-
+        remainingText.setText(getString(R.string.review_lbl_subtext, (reviewList.size() - 1)));
         checkMark.setVisibility( View.INVISIBLE );
 
-        Candidate candidate = reviewList.get( viewingIdx );
+        Candidate candidate = reviewList.get( 0 );
         try {
             reviewImage.setImageBitmap( candidate.getBitmap() );
         }
@@ -163,14 +164,14 @@ public class ReviewHitActivity extends Activity
     public void picturePressed(View v)
     {
         MeshballApplication app = (MeshballApplication) getApplication();
-        Candidate candidate = app.getReviewList().get( viewingIdx );
+        Candidate candidate = app.getReviewList().get( 0 );
         if ( candidate.getPlayerID() != null ) {
             checkMark.setVisibility( View.INVISIBLE );
             candidate.setPlayerID( null );
         }
         else {
             Intent intent = new Intent( this, FullScreenActivity.class );
-            intent.putExtra( "index", viewingIdx );
+            intent.putExtra( "index", 0 );
             startActivity( intent );
         }
     }
@@ -178,29 +179,7 @@ public class ReviewHitActivity extends Activity
     public void rejectPressed(View v)
     {
         MeshballApplication app = (MeshballApplication) getApplication();
-        List<Candidate> reviewList = app.getReviewList();
-
-        reviewList.remove( viewingIdx );
-        remainingCnt--;
-
-        if ( reviewList.size() == 0 ) {
-            app.setReviewing( false );
-            finish();
-        }
-        else {
-            if ( viewingIdx > (reviewList.size() - 1) ) {
-                viewingIdx = (reviewList.size() - 1);
-            }
-
-            remainingText.setText(getString(R.string.review_lbl_subtext, remainingCnt));
-
-            Candidate candidate = reviewList.get( viewingIdx );
-            try {
-                reviewImage.setImageBitmap( candidate.getBitmap() );
-            }
-            catch(IOException e) {
-                Log.e(TAG, e, "%s - Failed to load candidate bitmap: %s", e.getMessage(), candidate);
-            }
-        }
+        app.getReviewList().remove(0);
+        nextCandidate();
     }
 }

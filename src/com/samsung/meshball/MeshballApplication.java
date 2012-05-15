@@ -68,6 +68,7 @@ public class MeshballApplication extends Application
     private long inactivityTimer = 0;
 
     private List<Candidate> reviewList = new ArrayList<Candidate>();
+    private List<Candidate> sendList = new ArrayList<Candidate>();
     private List<Candidate> confirmList = new ArrayList<Candidate>();
 
     private Map<String, Player> playersMap = new HashMap<String, Player>();
@@ -79,8 +80,9 @@ public class MeshballApplication extends Application
 
     private WifiUtils wifiUtils;
 
-    private Timer timer = new  Timer();
+    private final Object lock = new Object();
 
+    private Timer timer = new  Timer();
     private TimerTask timerTask = new TimerTask() {
 
         @Override
@@ -98,6 +100,7 @@ public class MeshballApplication extends Application
                 nodeMap.clear();
                 reviewList.clear();
                 confirmList.clear();
+                sendList.clear();
 
                 if ( meshballActivity != null ) {
                     meshballActivity.finish();
@@ -112,8 +115,9 @@ public class MeshballApplication extends Application
             }
 
             // Handle any stuff to review...
-            if ( ! reviewing ) {
-                Iterator<Candidate> it = reviewList.iterator();
+
+            synchronized(lock) {
+                Iterator<Candidate> it = sendList.iterator();
                 while ( it.hasNext() ) {
                     final Candidate candidate = it.next();
                     if ( candidate.getPlayerID() != null ) {
@@ -126,10 +130,10 @@ public class MeshballApplication extends Application
                         newName.append( candidate.getFileName() );
 
                         File from = new File( candidate.getPath(), candidate.getFileName() );
-                        final File to = new File(  candidate.getPath(), newName.toString() );
+                        final File to = new File( candidate.getPath(), newName.toString() );
 
                         if ( ! from.renameTo( to ) ) {
-                            Log.e( TAG, "Failed to rename %s to %s", from, to );
+                            Log.e( TAG, "Failed to rename %s to %s", from.getAbsolutePath(), to.getAbsolutePath() );
                         }
                         else {
                             magnet.shareFile( null, CHANNEL, null, to.getAbsolutePath(), newName.toString(), new MagnetAgent.MagnetListener()
@@ -438,11 +442,6 @@ public class MeshballApplication extends Application
         super.onTerminate();
     }
 
-    public MeshballActivity getMeshballActivity()
-    {
-        return meshballActivity;
-    }
-
     public void setMeshballActivity(MeshballActivity meshballActivity)
     {
         this.meshballActivity = meshballActivity;
@@ -451,6 +450,13 @@ public class MeshballApplication extends Application
     public List<Candidate> getReviewList()
     {
         return reviewList;
+    }
+
+    public void sendHit(Candidate candidate)
+    {
+        synchronized ( lock ) {
+            sendList.add( candidate );
+        }
     }
 
     public List<Player> getPlayers()
@@ -749,6 +755,7 @@ public class MeshballApplication extends Application
 
         broadcastRetry++;
 
+        Log.d( TAG, "Broadcasting my identity: %s", screenName );
         magnet.sendData(null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
         {
             @Override
@@ -844,6 +851,8 @@ public class MeshballApplication extends Application
         String shooterID = new String( payload.get(1) );
         String reviewerID = new String( payload.get(2) );
 
+        Log.d( TAG, "hitID = %s, shooterID = %s, reviewerID = %s", hitID, shooterID, reviewerID );
+
         Player player = playersMap.get( hitID );
         Player shooter = playersMap.get( shooterID );
 
@@ -860,6 +869,7 @@ public class MeshballApplication extends Application
         while ( it.hasNext() ) {
             Candidate candidate = it.next();
             if ( candidate.getPlayerID().equals( hitID ) ) {
+                Log.d( TAG, "Removing %s", hitID );
                 it.remove();
             }
         }
@@ -876,6 +886,7 @@ public class MeshballApplication extends Application
         else {
             // Was it me who was hit?
             if ( hitID.equals( getPlayerID() ) ) {
+                Log.d( TAG, "I was hit!" );
                 leaveGame();
 
                 Intent intent = new Intent( meshballActivity, GameOverActivity.class );
@@ -885,6 +896,8 @@ public class MeshballApplication extends Application
             else {
                 // We have duplicate code to remove players.
                 // Here, and in the onLeaveEvent
+
+                Log.d( TAG, "%s was hit!", player.getPlayerID() );
 
                 playersMap.remove( player.getPlayerID() );
                 players.remove( player );
@@ -907,6 +920,8 @@ public class MeshballApplication extends Application
     {
         String playerID = new String( payload.get(0) );
         String name = new String(payload.get(1));
+
+        Log.d( TAG, "playerID = %s, name = %s", playerID, name );
 
         // Since node IDs can not be relied on to be stable, we will use a player ID that is
         // generated from the devices telephony details.  Each player generates and publishes their

@@ -146,6 +146,7 @@ public class MeshballActivity extends Activity
                 camera.addCallbackBuffer( data );
             }
 
+            Log.d( TAG, "inShot is false!" );
             inShot = false;
 
             // Set timer to clear the shot!
@@ -255,6 +256,9 @@ public class MeshballActivity extends Activity
                     if ( ! inShot ) {
                         fireShot();
                     }
+                    else {
+                        Log.d( TAG, "Still in the previous shot!" );
+                    }
 
                     return true;
                 }
@@ -287,6 +291,8 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onResume();
 
+        openCamera();
+
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeActive();
 
@@ -299,8 +305,10 @@ public class MeshballActivity extends Activity
             @Override
             public void run()
             {
+                Camera camera = null;
+
                 try {
-                    final Camera camera = Camera.open();
+                    camera = Camera.open();
                     if ( camera != null ) {
                         Log.d( TAG, "Camera is open, configuring..." );
                         if ( ! configManager.isInitialized() ) {
@@ -308,24 +316,23 @@ public class MeshballActivity extends Activity
                         }
                         configManager.setDesiredCameraParameters(camera);
                     }
-
-                    handler.post(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            onCameraReady(camera);
-                        }
-                    });
                 }
                 catch ( RuntimeException e ) {
                     Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
-                    displayFrameworkBugMessageAndExit();
                 }
                 catch(Exception e) {
                     Log.e(TAG, e, "Unexpected error initializing camera: %s", e.getMessage());
-                    displayFrameworkBugMessageAndExit();
                 }
+
+                final Camera finalCamera = camera;
+                handler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        onCameraReady(finalCamera);
+                    }
+                });
             }
         } );
         t.setPriority( Thread.MAX_PRIORITY );
@@ -355,6 +362,8 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onPause();
 
+        releaseCamera();
+
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeInactive();
     }
@@ -371,7 +380,6 @@ public class MeshballActivity extends Activity
     {
         Log.mark( TAG );
         super.onStop();
-        releaseCamera();
     }
 
     @Override
@@ -381,9 +389,6 @@ public class MeshballActivity extends Activity
         super.onStart();
 
         MeshballApplication app = (MeshballApplication) getApplication();
-
-        openCamera();
-
         if ( app.hasNoService() ) {
             String title = getString(R.string.dlg_noservice_title);
             String message = getString(R.string.dlg_noservice_message);
@@ -732,16 +737,21 @@ public class MeshballActivity extends Activity
     {
         Log.mark( TAG );
 
+        if ( camera == null ) {
+            displayFrameworkBugMessageAndExit();
+            return;
+        }
+
         if ( ! configManager.isInitialized() ) {
             configManager.initFromCameraParameters(camera);
         }
-        configManager.setDesiredCameraParameters( camera );
-        viewFinder.refreshDrawableState();
+        configManager.setDesiredCameraParameters(camera);
 
         preview.removeAllViews();
         cameraPreview = new CameraPreview(this, camera);
         preview.addView(cameraPreview,
                         new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                    ViewGroup.LayoutParams.MATCH_PARENT));
+        viewFinder.postInvalidate();
     }
 }
