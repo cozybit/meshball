@@ -50,6 +50,15 @@ public class ReviewHitActivity extends Activity
             String action = intent.getAction();
 
             if ( action.equalsIgnoreCase( MeshballApplication.REFRESH ) ) {
+
+                MeshballApplication app = (MeshballApplication) getApplication();
+                if ( app.getPlayers().size() == 0 ) {
+                    ReviewHitActivity.this.finish();
+                    return;
+                }
+
+                Log.d( TAG, "players.size() = %d", app.getPlayers().size() );
+
                 playerAdapter.notifyDataSetChanged();
                 gridview.invalidateViews();
             }
@@ -179,7 +188,9 @@ public class ReviewHitActivity extends Activity
     public void rejectPressed(View v)
     {
         MeshballApplication app = (MeshballApplication) getApplication();
-        app.getReviewList().remove(0);
+        if ( app.getReviewList().size() > 0 ) {
+            app.getReviewList().remove(0);
+        }
         nextCandidate();
     }
 }

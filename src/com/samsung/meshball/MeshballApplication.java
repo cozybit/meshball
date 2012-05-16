@@ -937,6 +937,11 @@ public class MeshballApplication extends Application
             if ( meshballActivity != null ) {
                 meshballActivity.showMessage(getString(R.string.has_joined, name));
             }
+
+            // Broadcast a refresh in case any activity is interested
+            Intent intent = new Intent( MeshballApplication.REFRESH );
+            intent.putExtra("player_id", player.getPlayerID());
+            sendBroadcast( intent );
         }
 
         player.setScreenName( name );
@@ -990,6 +995,9 @@ public class MeshballApplication extends Application
     {
         reviewList.clear();
         confirmList.clear();
+        players.clear();
+        sendList.clear();
+        playersMap.clear();
 
         score = 0;
         meshballActivity.updateHUD();

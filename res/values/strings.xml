@@ -66,6 +66,12 @@
     <string name="dlg_nothing_to_review_title">Nothing To Review</string>
     <string name="dlg_nothing_to_review_message">There is nothing to review.\n\nTake a shot at someone to review your shot and claim your hit.</string>
 
+    <string name="dlg_no_one_confirm_title">No One To Confirm</string>
+    <string name="dlg_no_one_confirm_message">Currently everyone has left or you are out of range.\n\nYou can confirm hits once there are other players.</string>
+
+    <string name="dlg_no_one_review_title">No More Players</string>
+    <string name="dlg_no_one_review_message">Currently everyone has left or you are out of range.\n\nYou can review your hits once there are other players.</string>
+
     <string name="dlg_nothing_to_confirm_title">Nothing To Confirm</string>
     <string name="dlg_nothing_to_confirm_message">There is nothing to confirm yet.\n\nYou need to wait until a player has fired a shot against another player that is not you.</string>
 

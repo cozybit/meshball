@@ -146,7 +146,7 @@ public class MeshballActivity extends Activity
                 camera.addCallbackBuffer( data );
             }
 
-            Log.d( TAG, "inShot is false!" );
+            Log.d( TAG, "inShot is now false!" );
             inShot = false;
 
             // Set timer to clear the shot!
@@ -296,6 +296,8 @@ public class MeshballActivity extends Activity
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeActive();
 
+        inShot = false;
+
         updateHUD();
     }
 
@@ -370,6 +372,7 @@ public class MeshballActivity extends Activity
 
     private void releaseCamera()
     {
+        Log.mark( TAG );
         if ( cameraPreview != null ) {
             cameraPreview.releaseCamera();
         }
@@ -571,6 +574,11 @@ public class MeshballActivity extends Activity
             displayDialog(R.string.dlg_nothing_to_review_title, R.string.dlg_nothing_to_review_message);
             return;
         }
+
+        if ( app.getPlayers().size() == 0 ) {
+            displayDialog(R.string.dlg_no_one_review_title, R.string.dlg_no_one_review_message);
+            return;
+        }
         Intent intent = new Intent(this, ReviewHitActivity.class);
         startActivity(intent);
     }
@@ -583,6 +591,12 @@ public class MeshballActivity extends Activity
             displayDialog(R.string.dlg_nothing_to_confirm_title, R.string.dlg_nothing_to_confirm_message);
             return;
         }
+
+        if ( app.getPlayers().size() == 0 ) {
+            displayDialog(R.string.dlg_no_one_confirm_title, R.string.dlg_no_one_confirm_message);
+            return;
+        }
+
         Intent intent = new Intent(this, ConfirmHitActivity.class);
         startActivity(intent);
     }
