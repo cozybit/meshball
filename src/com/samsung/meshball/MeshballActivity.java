@@ -278,11 +278,6 @@ public class MeshballActivity extends Activity
     public void onBackPressed()
     {
         Log.mark( TAG );
-
-        MeshballApplication app = (MeshballApplication) getApplication();
-        app.releaseService();
-
-        super.onBackPressed();
     }
 
     @Override
@@ -290,8 +285,6 @@ public class MeshballActivity extends Activity
     {
         Log.mark( TAG );
         super.onResume();
-
-        openCamera();
 
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeActive();
@@ -364,8 +357,6 @@ public class MeshballActivity extends Activity
         Log.mark( TAG );
         super.onPause();
 
-        releaseCamera();
-
         MeshballApplication app = (MeshballApplication) getApplication();
         app.becomeInactive();
     }
@@ -383,6 +374,8 @@ public class MeshballActivity extends Activity
     {
         Log.mark( TAG );
         super.onStop();
+
+        releaseCamera();
     }
 
     @Override
@@ -419,6 +412,9 @@ public class MeshballActivity extends Activity
                   app.getScreenName(), (app.isFirstTime() ? "YES" : "NO"));
             startActivity(new Intent(this, ProfileActivity.class));
         }
+        else {
+            openCamera();
+        }
     }
 
     @Override
@@ -449,21 +445,6 @@ public class MeshballActivity extends Activity
         menu.add(Menu.NONE, R.id.menu_leave_rejoin, 4, R.string.menu_leave)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
-        return true;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu)
-    {
-        MeshballApplication app = (MeshballApplication) getApplication();
-
-        MenuItem item = menu.getItem( 4 );
-        if ( app.isPlaying() ) {
-            item.setTitle( R.string.menu_leave );
-        }
-        else {
-            item.setTitle( R.string.menu_rejoin );
-        }
         return true;
     }
 
@@ -499,14 +480,7 @@ public class MeshballActivity extends Activity
                 return true;
 
             case R.id.menu_leave_rejoin:
-                if ( app.isPlaying() ) {
-                    displayReallyLeaveDialog();
-                }
-                else {
-                    // Join the game
-                    app.joinGame();
-                    fireButton.setAlpha( 1.0f );
-                }
+                displayReallyLeaveDialog();
                 return true;
 
             default:
@@ -517,10 +491,9 @@ public class MeshballActivity extends Activity
     public void fireShot()
     {
         MeshballApplication app = (MeshballApplication) getApplication();
-        if ( ! app.isPlaying() || (app.getPlayers().size() == 0) )  {
+        if ( (app.getPlayers().size() == 0) )  {
             showMessage( getString(R.string.no_players_yet) );
-            Log.d( TAG, "Not playing or no players.  Playing = %s, getPlayers().size() = %d",
-                   (app.isPlaying() ? "YES" : "NO"), app.getPlayers().size());
+            Log.d( TAG, "No players.  getPlayers().size() = %d", app.getPlayers().size());
             return;
         }
 
@@ -631,7 +604,8 @@ public class MeshballActivity extends Activity
                         // Refresh the lists
                         MeshballApplication app = (MeshballApplication) getApplication();
                         app.leaveGame();
-                        fireButton.setAlpha( .07f );
+                        app.releaseService();
+                        finish();
                         break;
 
                     case DialogInterface.BUTTON_NEGATIVE:

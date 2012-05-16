@@ -50,7 +50,6 @@ public class MeshballApplication extends Application
     private boolean isReady = false;
     private boolean noService = false;
     private boolean noValidSDK = false;
-    private boolean playing = true;
     private boolean reviewing = false;
     private Handler handler = new Handler();
 
@@ -184,9 +183,7 @@ public class MeshballApplication extends Application
             handleWifiConnect();
 
             Log.i(TAG, "Attempting to join: %s", CHANNEL);
-            if ( playing ) {
-                joinGame();
-            }
+            joinGame();
         }
 
         @Override
@@ -266,7 +263,7 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-                if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 4) ) {
+                if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 3) ) {
                     handleIdentity(fromNode, payload);
                 }
                 else if ( CONFIRMED_HIT_TYPE.equals( type ) && (payload.size() == 3) ) {
@@ -621,16 +618,6 @@ public class MeshballApplication extends Application
         return noValidSDK;
     }
 
-    public boolean isPlaying()
-    {
-        return playing;
-    }
-
-    public void setPlaying(boolean playing)
-    {
-        this.playing = playing;
-    }
-
     public boolean isReviewing()
     {
         return reviewing;
@@ -750,7 +737,6 @@ public class MeshballApplication extends Application
 
         payload.add( getPlayerID().getBytes() );
         payload.add( screenName.getBytes() );
-        payload.add( (playing ? new byte[] {1} : new byte[] {0}) );
         payload.add( bos.toByteArray() );
 
         broadcastRetry++;
@@ -946,12 +932,9 @@ public class MeshballApplication extends Application
 
         player.setScreenName( name );
 
-        byte[] flag = payload.get(2);
-        player.setIsPlaying( flag[0] == 1 );
-
         Log.i(TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode);
 
-        byte[] bytes = payload.get(3);
+        byte[] bytes = payload.get(2);
         player.setPicture(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
 
         // Let's still make a mapping with the node ID
@@ -988,7 +971,6 @@ public class MeshballApplication extends Application
         addPlayer(me);
 
         magnet.joinChannel( CHANNEL, channelListener );
-        playing = true;
     }
 
     public void leaveGame()
@@ -1003,7 +985,6 @@ public class MeshballApplication extends Application
         meshballActivity.updateHUD();
 
         magnet.leaveChannel(CHANNEL);
-        playing = false;
     }
 
     public void confirmedHit(Candidate beingReviewed)
@@ -1038,6 +1019,13 @@ public class MeshballApplication extends Application
         Log.mark( TAG );
         magnet.releaseService();
         magnet = null;
+
+        players.clear();
+        playersMap.clear();
+        nodeMap.clear();
+        sendList.clear();
+
+        score = 0;
     }
 
     public boolean hasService()
