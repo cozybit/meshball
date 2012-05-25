@@ -103,6 +103,12 @@ public class MediaManager
         return mediaStorageDir;
     }
 
+    public static Bitmap loadBitmapImage(File file)
+            throws IOException
+    {
+        return loadBitmapImage(Uri.parse(file.getAbsolutePath()));
+    }
+
     public static Bitmap loadBitmapImage(String name)
             throws IOException
     {
@@ -113,7 +119,7 @@ public class MediaManager
         return loadBitmapImage(Uri.parse(path.getPath() + File.separator + name));        
     }
 
-    private static Bitmap loadBitmapImage(Uri uri)
+    public static Bitmap loadBitmapImage(Uri uri)
             throws IOException
     {
         FileInputStream fis = null;

@@ -52,7 +52,7 @@ public class ReviewHitActivity extends Activity
             if ( action.equalsIgnoreCase( MeshballApplication.REFRESH ) ) {
 
                 MeshballApplication app = (MeshballApplication) getApplication();
-                if ( app.getPlayers().size() == 0 ) {
+                if ( app.getPlayers().isEmpty() || app.getReviewList().isEmpty() ) {
                     ReviewHitActivity.this.finish();
                     return;
                 }

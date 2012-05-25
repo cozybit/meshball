@@ -26,6 +26,7 @@
     <string name="warning">Warning</string>
     <string name="error">Error</string>
     <string name="how_to">How To</string>
+    <string name="clear">Clear</string>
     <string name="use">Use</string>
     <string name="pick">Pick</string>
     <string name="take">Take</string>
@@ -40,6 +41,7 @@
     <string name="toast_failed_to_delete_tmp_file">Failed to delete temporary file.</string>
     <string name="toast_service_terminated">Magnet Service Terminated</string>
     <string name="toast_failed_send_file">Failed to send file</string>
+    <string name="toast_failed_to_load_image">Failed to load image.</string>
 
     <string name="no_service">No magnet service installed.</string>
     <string name="invalid_sdk">Magnet SDK is invalid.</string>

@@ -4,15 +4,21 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
+import android.graphics.*;
+import android.media.FaceDetector;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.*;
 import com.samsung.meshball.data.Player;
 import com.samsung.meshball.utils.Log;
+import com.samsung.meshball.utils.MediaManager;
+import com.samsung.meshball.utils.Utils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 /**
  * This class ...
@@ -23,8 +29,10 @@ public class ProfileActivity
     private static final String TAG = ProfileActivity.class.getName();
 
     public static final String PROFILE_IMAGE = "com.samsung.meshball.PROFILE_IMAGE";
+    private static final int CAPTURE_IMAGE = 100;
 
     private boolean pictureSet = true;
+    private File tmpImageFile;
 
     private BroadcastReceiver profileReceiver = new BroadcastReceiver() {
         @Override
@@ -49,10 +57,100 @@ public class ProfileActivity
         }
     };
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (resultCode == RESULT_OK) {
+            switch ( requestCode ) {
+                case CAPTURE_IMAGE:
+                    autoCrop();
+                    break;
+            }
+        }
+        else {
+            Toast.makeText( this, getString(R.string.crop_option_no_result_message), Toast.LENGTH_LONG ).show();
+            Log.w(TAG, "Activity returned with a result code of %1$d", resultCode);
+        }
+    }
+
+    private void autoCrop()
+    {
+        // Remember, the image is in our FILE that we handed to the camera in the EXTRA_OUTPUT extra
+
+        try {
+            ImageView profileImageView = (ImageView) findViewById( R.id.profile_imageview );
+
+            FileInputStream fis = new FileInputStream(tmpImageFile);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            Bitmap rawImage = BitmapFactory.decodeStream(fis, null, options);
+
+            FaceDetector faceDetector = new FaceDetector( rawImage.getWidth(), rawImage.getHeight(), 1 );
+            FaceDetector.Face[] detectedFaces = new FaceDetector.Face[1];
+            int facesDetected = faceDetector.findFaces( rawImage, detectedFaces );
+            Log.d( TAG, "Found %d faces", facesDetected );
+
+            PointF midPoint;
+            float distance;
+
+            if ( facesDetected > 0 ) {
+                FaceDetector.Face face = detectedFaces[0];
+                midPoint = new PointF();
+                face.getMidPoint(midPoint);
+                distance = (face.eyesDistance() * 1.75f);
+                Log.d( TAG, "distance = %f, midPoint.x = %f, midPoint.y = %f", distance, midPoint.x, midPoint.y );
+            }
+            else {
+                // Failed to detect faces, so assume the center
+                midPoint = new PointF( rawImage.getWidth()/2 - 300, rawImage.getHeight()/2 - 300 );
+                distance = 300;
+            }
+
+            Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
+            Canvas canvas = new Canvas( faceBitmap );
+            Paint paint = new Paint();
+
+            Rect src = new Rect( (int)(midPoint.x - distance), (int) (midPoint.y - distance),
+                                 (int) (midPoint.x + distance), (int) (midPoint.y + distance) );
+
+            // Adjust the src rect if the face is not actually centered...
+
+            RectF dest = new RectF( 0, 0, 300, 300 );
+
+            canvas.drawBitmap( rawImage, src, dest, paint );
+            profileImageView.setImageBitmap( faceBitmap );
+
+            MeshballApplication app = (MeshballApplication) getApplication();
+            app.setTempProfileImage( faceBitmap );
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+            Toast.makeText( this, getString( R.string.toast_failed_to_load_image ), Toast.LENGTH_LONG ).show();
+            Log.e(TAG, e, "Failed to load bitmap - %s", e.getMessage());
+        }
+    }
+
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView( R.layout.profile );
+
+        if ( ! Utils.checkCameraHardware(getApplicationContext())) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
+            builder.setMessage(R.string.dlg_no_camera_text)
+                    .setTitle(R.string.dlg_no_camera_title)
+                    .setPositiveButton(R.string.okay, new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i)
+                        {
+                            finish();
+                        }
+                    });
+
+            builder.show();
+            return;
+        }
 
         registerReceiver(profileReceiver, new IntentFilter(PROFILE_IMAGE));
 
@@ -113,29 +211,7 @@ public class ProfileActivity
                     finish();
                 }
                 else {
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which){
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    //Yes button clicked
-                                    break;
-
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    //No button clicked
-                                    break;
-                            }
-                        }
-                    };
-
-                    String message = getString( R.string.dlg_displayname_text );
-                    String title = getString( R.string.dlg_displayname_title );
-                    String buttonTitle = getString( R.string.okay );
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
-                    builder.setMessage(message).setTitle(title).setPositiveButton(buttonTitle, dialogClickListener);
-                    AlertDialog alert = builder.create();
-                    alert.show();
+                    displayInvalidSetupDialog();
                 }
             }
         });
@@ -148,7 +224,15 @@ public class ProfileActivity
             public void onClick( View view )
             {
                 Log.d( TAG, "profile image clicked!" );
-                startActivity(new Intent(ProfileActivity.this, ImagePickerActivity.class));
+                tmpImageFile = MediaManager.getOutputMediaFile(MediaManager.MEDIA_TYPE_IMAGE);
+
+                Log.d(TAG, "tempImageFile = %1$s", tmpImageFile);
+
+                Intent intent = new Intent( MediaStore.ACTION_IMAGE_CAPTURE );
+                intent.putExtra( MediaStore.EXTRA_OUTPUT, Uri.fromFile(tmpImageFile) );
+
+                // start the image capture Intent
+                startActivityForResult(intent, CAPTURE_IMAGE);
             }
         });
 
@@ -230,29 +314,42 @@ public class ProfileActivity
             super.onBackPressed();
         }
         else {
-            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which){
-                        case DialogInterface.BUTTON_POSITIVE:
-                            //Yes button clicked
-                            break;
-
-                        case DialogInterface.BUTTON_NEGATIVE:
-                            //No button clicked
-                            break;
-                    }
-                }
-            };
-
-            String message = getString( R.string.dlg_displayname_text );
-            String title = getString( R.string.dlg_displayname_title );
-            String buttonTitle = getString( R.string.okay );
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
-            builder.setMessage(message).setTitle(title).setPositiveButton(buttonTitle, dialogClickListener);
-            AlertDialog alert = builder.create();
-            alert.show();
+            displayInvalidSetupDialog();
         }
     }
+
+    private void displayInvalidSetupDialog()
+    {
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        //Yes button clicked
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+
+        String message = getString( R.string.dlg_displayname_text );
+        String title = getString( R.string.dlg_displayname_title );
+        String buttonTitle = getString( R.string.okay );
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
+        builder.setMessage(message).setTitle(title).setPositiveButton(buttonTitle, dialogClickListener);
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    public void clearPressed(View view)
+    {
+        Log.mark( TAG );
+        EditText displayNameView = (EditText) findViewById( R.id.screenname );
+        displayNameView.setText( "" );
+    }
+
 }

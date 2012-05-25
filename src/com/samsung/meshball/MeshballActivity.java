@@ -44,6 +44,7 @@ public class MeshballActivity extends Activity
     private int shotCounter = 0;
     private String statusMessage = "";
 
+    private AlertDialog alertDialog;
     private ImageButton fireButton;
     private TextView scoreLabel;
     private TextView playersLabel;
@@ -145,9 +146,6 @@ public class MeshballActivity extends Activity
 
                 camera.addCallbackBuffer( data );
             }
-
-            Log.d( TAG, "inShot is now false!" );
-            inShot = false;
 
             // Set timer to clear the shot!
             handler.postDelayed( new Runnable() {
@@ -376,6 +374,10 @@ public class MeshballActivity extends Activity
         super.onStop();
 
         releaseCamera();
+        if ( alertDialog != null ) {
+            alertDialog.dismiss();
+        }
+        alertDialog = null;
     }
 
     @Override
@@ -528,6 +530,18 @@ public class MeshballActivity extends Activity
         else {
             Log.w( TAG, "WARNING - CameraPreview is null..." );
         }
+
+        // Set timer to clear the shot!  These needs to not be in the callback because it is possible that the
+        // callback is never called if the camera is released.
+
+        handler.postDelayed( new Runnable() {
+            @Override
+            public void run()
+            {
+                Log.d( TAG, "inShot is now false!" );
+                inShot = false;
+            }
+        }, 750 );
     }
 
     public void clearShot()
@@ -588,8 +602,8 @@ public class MeshballActivity extends Activity
                     }
                 })
                 .setCancelable(true);
-        AlertDialog alert = builder.create();
-        alert.show();
+        alertDialog = builder.create();
+        alertDialog.show();
     }
 
     public void displayReallyLeaveDialog()
@@ -620,8 +634,8 @@ public class MeshballActivity extends Activity
                 .setCancelable(false)
                 .setPositiveButton(R.string.yes, listener)
                 .setNegativeButton(R.string.no, listener);
-        AlertDialog alert = builder.create();
-        alert.show();
+        alertDialog = builder.create();
+        alertDialog.show();
     }
 
     private void displayDialog(String title, String message)
@@ -638,7 +652,8 @@ public class MeshballActivity extends Activity
                     }
                 });
 
-        builder.show();
+        alertDialog = builder.create();
+        alertDialog.show();
     }
 
     private void displayFrameworkBugMessageAndExit()
@@ -648,7 +663,9 @@ public class MeshballActivity extends Activity
         builder.setMessage( getString( R.string.msg_camera_framework_bug ) );
         builder.setPositiveButton( R.string.okay, new FinishListener( this ) );
         builder.setOnCancelListener( new FinishListener( this ) );
-        builder.show();
+
+        alertDialog = builder.create();
+        alertDialog.show();
     }
 
     public Rect getFramingRect()

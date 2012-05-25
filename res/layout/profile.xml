@@ -42,7 +42,7 @@
 
     <Button
             android:id="@+id/howto_button"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
@@ -52,7 +52,8 @@
 
     <Button
             android:id="@+id/update_button"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp
+            "
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
@@ -73,27 +74,42 @@
             android:textSize="15sp">
     </TextView>
 
-    <EditText
-            android:id="@+id/screenname"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/screenname_label"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:hint="@string/profile_screenname_hint"
-            android:inputType="textCapWords|textPersonName"
-            android:singleLine="true"
-            android:editable="true"
-            android:textColor="@color/solid_black"
-            android:textSize="15sp">
-    </EditText>
+    <RelativeLayout android:id="@+id/editbox"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/screenname_label"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp">
+        <EditText
+                android:id="@+id/screenname"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/editbox_background_normal"
+                android:hint="@string/profile_screenname_hint"
+                android:inputType="textCapWords|textPersonName"
+                android:singleLine="true"
+                android:editable="true"
+                android:textColor="@color/solid_black"
+                android:textSize="15sp">
+        </EditText>
+
+        <ImageButton
+                android:id="@+id/clearable_button_clear"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/delete"
+                android:onClick="clearPressed"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="5dip"/>
+    </RelativeLayout>
+
 
     <TextView
             android:id="@+id/picture_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/screenname"
+            android:layout_below="@id/editbox"
             android:layout_marginLeft="15dp"
             android:layout_marginTop="10dp"
             android:text="@string/profile_picture"
