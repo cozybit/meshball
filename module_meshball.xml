@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_meshball" default="compile.module.meshball">
+  <dirname property="module.meshball.basedir" file="${ant.file.module_meshball}"/>
+  
+  <property name="module.jdk.home.meshball" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.meshball" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.meshball" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.meshball" value="${compiler.args}"/>
+  
+  <property name="meshball.output.dir" value="${module.meshball.basedir}/out/production/Meshball"/>
+  <property name="meshball.testoutput.dir" value="${module.meshball.basedir}/out/test/Meshball"/>
+  
+  <path id="meshball.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="meshball.module.production.classpath">
+    <path refid="${module.jdk.classpath.meshball}"/>
+    <pathelement location="${basedir}/libs/magnet-service-standalone-2.0.19.jar"/>
+    <path refid="library.magnet-service.classpath"/>
+    <path refid="library.itc4j-1.0.classpath"/>
+  </path>
+  
+  <path id="meshball.runtime.production.module.classpath">
+    <pathelement location="${meshball.output.dir}"/>
+    <pathelement location="${basedir}/libs/magnet-service-standalone-2.0.19.jar"/>
+    <path refid="library.magnet-service.classpath"/>
+    <path refid="library.itc4j-1.0.classpath"/>
+  </path>
+  
+  <path id="meshball.module.classpath">
+    <path refid="${module.jdk.classpath.meshball}"/>
+    <pathelement location="${meshball.output.dir}"/>
+    <pathelement location="${basedir}/libs/magnet-service-standalone-2.0.19.jar"/>
+    <path refid="library.magnet-service.classpath"/>
+    <path refid="library.itc4j-1.0.classpath"/>
+  </path>
+  
+  <path id="meshball.runtime.module.classpath">
+    <pathelement location="${meshball.testoutput.dir}"/>
+    <pathelement location="${meshball.output.dir}"/>
+    <pathelement location="${basedir}/libs/magnet-service-standalone-2.0.19.jar"/>
+    <path refid="library.magnet-service.classpath"/>
+    <path refid="library.itc4j-1.0.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.meshball">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.meshball">
+    <patternset refid="compiler.excluded"/>
+    <patternset refid="excluded.from.module.meshball"/>
+  </patternset>
+  
+  <path id="meshball.module.sourcepath">
+    <dirset dir="${module.meshball.basedir}">
+      <include name="gen"/>
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.meshball" depends="compile.module.meshball.production,compile.module.meshball.tests" description="Compile module Meshball"/>
+  
+  <target name="compile.module.meshball.production" depends="register.custom.compilers" description="Compile module Meshball; production classes">
+    <mkdir dir="${meshball.output.dir}"/>
+    <javac2 destdir="${meshball.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.meshball}/javac">
+      <compilerarg line="${compiler.args.meshball}"/>
+      <bootclasspath refid="meshball.module.bootclasspath"/>
+      <classpath refid="meshball.module.production.classpath"/>
+      <src refid="meshball.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.meshball"/>
+    </javac2>
+    
+    <copy todir="${meshball.output.dir}">
+      <fileset dir="${module.meshball.basedir}/gen">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.meshball"/>
+      </fileset>
+      <fileset dir="${module.meshball.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+        <patternset refid="excluded.from.compilation.meshball"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.meshball.tests" depends="register.custom.compilers,compile.module.meshball.production" description="compile module Meshball; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.meshball" description="cleanup module">
+    <delete dir="${meshball.output.dir}"/>
+    <delete dir="${meshball.testoutput.dir}"/>
+  </target>
+</project>

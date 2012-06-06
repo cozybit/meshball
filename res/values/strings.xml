@@ -129,4 +129,6 @@
     <string name="menu_rejoin">Join</string>
     <string name="menu_extra">ChannelUsers</string>
 
+    <string name="progress_auto_cropping">Detecting face...</string>
+
 </resources>

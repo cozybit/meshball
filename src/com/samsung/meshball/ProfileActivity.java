@@ -2,6 +2,7 @@ package com.samsung.meshball;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.*;
@@ -35,6 +36,8 @@ public class ProfileActivity
 
     private boolean pictureSet = true;
     private File tmpImageFile;
+
+    private ProgressDialog progressDialog;
 
     private BroadcastReceiver profileReceiver = new BroadcastReceiver() {
         @Override
@@ -82,6 +85,15 @@ public class ProfileActivity
                             profileImageView.setImageBitmap( bitmap );
 
                             app.setTempProfileImage( bitmap );
+                            pictureSet = true;
+                            progressDialog.dismiss();
+                        }
+
+                        @Override
+                        protected void onPreExecute()
+                        {
+                            progressDialog.setMessage(getString(R.string.progress_auto_cropping));
+                            progressDialog.show();
                         }
                     };
                     task.execute(new Void[]{});
@@ -191,6 +203,8 @@ public class ProfileActivity
         super.onCreate(savedInstanceState);
         setContentView( R.layout.profile );
 
+        progressDialog = new ProgressDialog(this);
+
         if ( ! Utils.checkCameraHardware(getApplicationContext())) {
             AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this);
             builder.setMessage(R.string.dlg_no_camera_text)
@@ -262,7 +276,9 @@ public class ProfileActivity
                     }
 
                     app.savePreferences();
-                    app.broadcastIdentity();
+                    if ( app.inGame() ) {
+                        app.broadcastIdentity();
+                    }
 
                     finish();
                 }
@@ -350,6 +366,8 @@ public class ProfileActivity
         if ( app != null ) {
             app.savePreferences();
         }
+
+        progressDialog.dismiss();
     }
 
     @Override

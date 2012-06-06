@@ -51,6 +51,7 @@ public class MeshballApplication extends Application
     private boolean noService = false;
     private boolean noValidSDK = false;
     private boolean reviewing = false;
+    private boolean inGame = false;
     private Handler handler = new Handler();
 
     private Bitmap tempProfileImage;
@@ -595,6 +596,10 @@ public class MeshballApplication extends Application
         return reviewing;
     }
 
+    public boolean inGame()
+    {
+        return inGame;
+    }
     public void setReviewing(boolean reviewing)
     {
         this.reviewing = reviewing;
@@ -694,6 +699,11 @@ public class MeshballApplication extends Application
     public void broadcastIdentity()
     {
         Log.mark(TAG);
+
+        if ( ! inGame ) {
+            Log.i( TAG, "Not yet in the game - nothing to broadcast." );
+            return;
+        }
 
         if ( screenName == null ) {
             Log.i( TAG, "Identity has not been set up yet - nothing to broadcast." );
@@ -880,7 +890,7 @@ public class MeshballApplication extends Application
         String playerID = new String( payload.get(0) );
         String name = new String(payload.get(1));
 
-        Log.d( TAG, "playerID = %s, name = %s", playerID, name );
+        Log.d(TAG, "playerID = %s, name = %s", playerID, name);
 
         // Since node IDs can not be relied on to be stable, we will use a player ID that is
         // generated from the devices telephony details.  Each player generates and publishes their
@@ -903,7 +913,7 @@ public class MeshballApplication extends Application
             sendBroadcast( intent );
         }
 
-        player.setScreenName( name );
+        player.setScreenName(name);
 
         Log.i(TAG, "Got identity for player: %s [ID %s, Node: %s]", screenName, playerID, fromNode);
 
@@ -939,6 +949,7 @@ public class MeshballApplication extends Application
         addPlayer(me);
 
         magnet.joinChannel( CHANNEL, channelListener );
+        inGame = true;
     }
 
     public void leaveGame()
@@ -953,6 +964,7 @@ public class MeshballApplication extends Application
         meshballActivity.updateHUD();
 
         magnet.leaveChannel(CHANNEL);
+        inGame = false;
     }
 
     public void confirmedHit(Candidate beingReviewed)
