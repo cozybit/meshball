@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.*;
 import android.media.FaceDetector;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
@@ -62,7 +63,27 @@ public class ProfileActivity
         if (resultCode == RESULT_OK) {
             switch ( requestCode ) {
                 case CAPTURE_IMAGE:
-                    autoCrop();
+                    AsyncTask<Void, Void, Bitmap> task = new AsyncTask<Void, Void, Bitmap>() {
+                        @Override
+                        protected Bitmap doInBackground(Void... voids)
+                        {
+                            return autoCrop();
+                        }
+
+                        @Override
+                        protected void onPostExecute(Bitmap bitmap)
+                        {
+                            MeshballApplication app = (MeshballApplication) getApplication();
+                            if ( bitmap == null ) {
+                                bitmap = app.getTempProfileImage();
+                            }
+                            ImageView profileImageView = (ImageView) findViewById( R.id.profile_imageview );
+                            profileImageView.setImageBitmap( bitmap );
+
+                            app.setTempProfileImage( bitmap );
+                        }
+                    };
+                    task.execute(new Void[]{});
                     break;
             }
         }
@@ -72,13 +93,11 @@ public class ProfileActivity
         }
     }
 
-    private void autoCrop()
+    private Bitmap autoCrop()
     {
         // Remember, the image is in our FILE that we handed to the camera in the EXTRA_OUTPUT extra
 
         try {
-            ImageView profileImageView = (ImageView) findViewById( R.id.profile_imageview );
-
             FileInputStream fis = new FileInputStream(tmpImageFile);
             BitmapFactory.Options options = new BitmapFactory.Options();
 
@@ -103,30 +122,44 @@ public class ProfileActivity
             else {
                 // Failed to detect faces, so assume the center
                 midPoint = new PointF( rawImage.getWidth()/2 - 300, rawImage.getHeight()/2 - 300 );
-                distance = 300;
+                distance = 150;
             }
 
-            Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
+            final Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
             Canvas canvas = new Canvas( faceBitmap );
             Paint paint = new Paint();
 
-            Rect src = new Rect( (int)(midPoint.x - distance), (int) (midPoint.y - distance),
-                                 (int) (midPoint.x + distance), (int) (midPoint.y + distance) );
+            int left = (int) (midPoint.x - distance);
+            if ( left < 0 ) {
+                left = 0;
+            }
+            int top = (int) (midPoint.y - distance);
+            if ( top < 0 ) {
+                top = 0;
+            }
+            int right = (int) (midPoint.x + distance);
+            if ( right > 300 ) {
+                right = 300;
+            }
+            int bottom = (int) (midPoint.y + distance);
+            if ( bottom > 300 ) {
+                bottom = 300;
+            }
+
+            Rect src = new Rect( left, top, right, bottom);
 
             // Adjust the src rect if the face is not actually centered...
 
             RectF dest = new RectF( 0, 0, 300, 300 );
-
             canvas.drawBitmap( rawImage, src, dest, paint );
-            profileImageView.setImageBitmap( faceBitmap );
 
-            MeshballApplication app = (MeshballApplication) getApplication();
-            app.setTempProfileImage( faceBitmap );
+            return faceBitmap;
         }
         catch(IOException e) {
             e.printStackTrace();
             Toast.makeText( this, getString( R.string.toast_failed_to_load_image ), Toast.LENGTH_LONG ).show();
             Log.e(TAG, e, "Failed to load bitmap - %s", e.getMessage());
+            return null;
         }
     }
 

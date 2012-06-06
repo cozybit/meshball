@@ -444,7 +444,10 @@ public class MeshballActivity extends Activity
         menu.add(Menu.NONE, R.id.menu_settings, 3, R.string.menu_settings)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
-        menu.add(Menu.NONE, R.id.menu_leave_rejoin, 4, R.string.menu_leave)
+        menu.add(Menu.NONE, R.id.menu_leave, 4, R.string.menu_leave)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+
+        menu.add(Menu.NONE, R.id.menu_extra, 4, R.string.menu_extra)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
         return true;
@@ -481,9 +484,15 @@ public class MeshballActivity extends Activity
                 startActivity(intent);
                 return true;
 
-            case R.id.menu_leave_rejoin:
+            case R.id.menu_leave:
                 displayReallyLeaveDialog();
                 return true;
+
+            case R.id.menu_extra:
+                intent = new Intent(this, ChannelUsers.class);
+                startActivity(intent);
+                return true;
+
 
             default:
                 return super.onOptionsItemSelected(item);

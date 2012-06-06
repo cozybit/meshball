@@ -98,8 +98,14 @@ public class WifiUtils
 
     public WifiUtils(Context context)
     {
-        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        Log.i(TAG, "BSSID = %s, SSID = %s", wifiManager.getConnectionInfo().getBSSID(), wifiManager.getConnectionInfo().getSSID());
+        try {
+            wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            Log.i(TAG, "BSSID = %s, SSID = %s", wifiManager.getConnectionInfo().getBSSID(), wifiManager.getConnectionInfo().getSSID());
+        }
+        catch(Throwable e) {
+            Log.e(TAG, e, "Caught exception: %s", e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

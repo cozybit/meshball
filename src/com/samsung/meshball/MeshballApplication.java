@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
+import android.widget.Toast;
 import com.samsung.magnet.wrapper.MagnetAgent;
 import com.samsung.magnet.wrapper.MagnetAgentImpl;
 import com.samsung.meshball.data.Candidate;
@@ -21,7 +22,6 @@ import com.samsung.meshball.data.Player;
 import com.samsung.meshball.utils.Log;
 import com.samsung.meshball.utils.MediaManager;
 import com.samsung.meshball.utils.Utils;
-import com.samsung.meshball.utils.WifiUtils;
 
 import java.io.*;
 import java.security.MessageDigest;
@@ -76,8 +76,6 @@ public class MeshballApplication extends Application
 
     private Random dice = new Random( System.currentTimeMillis() );
     private List<Drawable> splatters = new ArrayList<Drawable>();
-
-    private WifiUtils wifiUtils;
 
     private final Object lock = new Object();
 
@@ -203,8 +201,7 @@ public class MeshballApplication extends Application
         @Override
         public void onMagnetPeers()
         {
-            Log.mark( TAG );
-            magnet.getConnectedNodes( CHANNEL, nodeListListener );
+            Log.mark(TAG);
         }
     };
 
@@ -214,6 +211,7 @@ public class MeshballApplication extends Application
         public void onJoinEvent(String fromNode, String fromChannel)
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
+            Toast.makeText( getApplicationContext(), "onJoin(" + fromNode + " on " + fromChannel + ")", Toast.LENGTH_SHORT ).show();
             if ( fromChannel.equals( CHANNEL ) ) {
                 // A join event will trigger a broadcast/shout out
                 broadcastIdentity();
@@ -224,6 +222,8 @@ public class MeshballApplication extends Application
         public void onLeaveEvent(String fromNode, String fromChannel)
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
+            Toast.makeText( getApplicationContext(), "onLeave(" + fromNode + " on " + fromChannel + ")", Toast.LENGTH_SHORT ).show();
+
             if ( fromChannel.equals( CHANNEL ) ) {
                 Player player = nodeMap.get( fromNode );
                 if ( player == null ) {
@@ -346,32 +346,6 @@ public class MeshballApplication extends Application
         }
     };
 
-   private MagnetAgent.NodeListListener nodeListListener = new MagnetAgent.NodeListListener()
-    {
-        @Override
-        public void onResult(String channel, List<String> connectedList)
-        {
-            if ( channel.equals( CHANNEL ) ) {
-                Log.d( TAG, "Connected Users on %s:", channel );
-                Log.d( TAG, "=======================================================" );
-
-                for( String nodeID : connectedList ) {
-                    Log.d( TAG, "   %s - %s", nodeID, nodeMap.get( nodeID ) );
-                }
-
-                // Use this trigger our broadcast/shout out of ourselves!!!
-                broadcastIdentity();
-            }
-        }
-
-        @Override
-        public void onFailure(int reason)
-        {
-            Log.e( TAG, "Failed to get connected nodes. Reason = %d", reason );
-        }
-    };
-
-
     @Override
     public void onCreate()
     {
@@ -406,8 +380,6 @@ public class MeshballApplication extends Application
                 Log.w( TAG, "Failed to delete file: %s", file );
             }
         }
-
-        wifiUtils = new WifiUtils( this );
 
         // Add some players
 
@@ -748,6 +720,7 @@ public class MeshballApplication extends Application
             public void onFailure(int reason)
             {
                 Log.e(TAG, "Failure broadcasting identity. Reason = %d", reason);
+                Toast.makeText( getApplicationContext(), "FAILURE SENDING IDENTITY : " + reason, Toast.LENGTH_SHORT ).show();
 
                 // Schedule it again...
                 handler.postDelayed(new Runnable()
@@ -948,11 +921,6 @@ public class MeshballApplication extends Application
         player.setNodeID(fromNode);
     }
 
-    public WifiUtils getWifiUtils()
-    {
-        return wifiUtils;
-    }
-
     public void joinGame()
     {
         score = 0;
@@ -1059,6 +1027,16 @@ public class MeshballApplication extends Application
     public void becomeActive()
     {
         inactivityTimer = 0;
+    }
+
+    public void getConnectedNodes( MagnetAgent.NodeListListener nodeListListener )
+    {
+        magnet.getConnectedNodes( CHANNEL, nodeListListener );
+    }
+
+    public Player getPlayerByNodeID(String nodeID)
+    {
+        return nodeMap.get(nodeID);
     }
 }
 

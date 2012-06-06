@@ -48,6 +48,7 @@
                   android:screenOrientation="portrait"/>
         <activity android:name=".GameOverActivity"
                   android:screenOrientation="portrait"/>
+        <activity android:name=".ChannelUsers"/>
 
     </application>
 </manifest>
