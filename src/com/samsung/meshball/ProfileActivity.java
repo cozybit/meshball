@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Display;
 import android.view.View;
 import android.widget.*;
 import com.samsung.meshball.data.Player;
@@ -110,40 +111,62 @@ public class ProfileActivity
             Log.d( TAG, "Found %d faces", facesDetected );
 
             PointF midPoint;
-            float distance;
+            float distance, origDistance;
+
+            Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
 
             if ( facesDetected > 0 ) {
                 FaceDetector.Face face = detectedFaces[0];
                 midPoint = new PointF();
                 face.getMidPoint(midPoint);
-                distance = (face.eyesDistance() * 1.75f);
-                Log.d( TAG, "distance = %f, midPoint.x = %f, midPoint.y = %f", distance, midPoint.x, midPoint.y );
+                origDistance = face.eyesDistance();
+                Log.d( TAG, "distance = %f, midPoint.x = %f, midPoint.y = %f", origDistance, midPoint.x, midPoint.y );
             }
             else {
                 // Failed to detect faces, so assume the center
-                midPoint = new PointF( rawImage.getWidth()/2 - 300, rawImage.getHeight()/2 - 300 );
-                distance = 150;
+                origDistance = 300;
+                midPoint = new PointF( rawImage.getWidth()/2, rawImage.getHeight()/2 );
             }
+
+            // First, crop the area around the face...
 
             final Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
             Canvas canvas = new Canvas( faceBitmap );
             Paint paint = new Paint();
 
-            int left = (int) (midPoint.x - distance);
-            if ( left < 0 ) {
-                left = 0;
-            }
-            int top = (int) (midPoint.y - distance);
-            if ( top < 0 ) {
-                top = 0;
-            }
-            int right = (int) (midPoint.x + distance);
-            if ( right > 300 ) {
-                right = 300;
-            }
-            int bottom = (int) (midPoint.y + distance);
-            if ( bottom > 300 ) {
-                bottom = 300;
+            int left = 0, top = 0, right = 300, bottom = 300;
+            float ratio = 2f;
+            for ( int attempt = 0; attempt < 3; attempt++ ) {
+                distance = origDistance * ratio;
+                left = (int) (midPoint.x - distance);
+                if ( left < 0 ) {
+                    left = 0;
+                }
+                top = (int) (midPoint.y - distance);
+                if ( top < 0 ) {
+                    top = 0;
+                }
+                right = (int) (left + (distance * 2));
+                if ( right > rawImage.getWidth() ) {
+                    left -= (right - rawImage.getWidth());
+                    if ( left < 0 ) {
+                        ratio -= 0.33f;
+                        continue;
+                    }
+                    right = rawImage.getWidth();
+                }
+                bottom = (int) (top + (distance * 2));
+                if ( bottom > rawImage.getHeight() ) {
+                    top -= (bottom - rawImage.getHeight());
+                    if ( top < 0 ) {
+                        ratio -= 0.33f;
+                        continue;
+                    }
+                    bottom = rawImage.getHeight();
+                }
+                break;
             }
 
             Rect src = new Rect( left, top, right, bottom);
