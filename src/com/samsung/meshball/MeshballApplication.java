@@ -227,15 +227,17 @@ public class MeshballApplication extends Application
 
             if ( fromChannel.equals( CHANNEL ) ) {
                 Player player = nodeMap.get( fromNode );
+                nodeMap.remove( fromNode );
+
                 if ( player == null ) {
                     Log.e( TAG, "GOT NULL PLAYER BACK!  fromNode = %s", fromNode );
+                    meshballActivity.updateHUD();
                     return;
                 }
 
                 // Remove them from the game...
                 Log.i( TAG, "Removing player %s from game...", player );
 
-                nodeMap.remove( fromNode );
                 playersMap.remove( player.getPlayerID() );
                 players.remove( player );
 
@@ -444,15 +446,15 @@ public class MeshballApplication extends Application
         playersMap.put( player.getPlayerID(), player );
         if ( ! players.contains( player ) && ! player.isMe()) {
             players.add( player );
-
-            handler.post( new Runnable() {
-                @Override
-                public void run()
-                {
-                    meshballActivity.updateHUD();
-                }
-            } );
         }
+
+        handler.post( new Runnable() {
+            @Override
+            public void run()
+            {
+                meshballActivity.updateHUD();
+            }
+        } );
     }
 
     public void removePlayer(String playerID)
