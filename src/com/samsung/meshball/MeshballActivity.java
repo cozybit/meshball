@@ -527,7 +527,12 @@ public class MeshballActivity extends Activity
 
                 if( (focusModes != null) && focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO) ) {
                     //Phone supports autofocus! Focus first, then take picture
-                    camera.autoFocus( autoFocusCallback );
+                    try {
+			camera.autoFocus( autoFocusCallback );
+		    } catch (RuntimeException e) {
+			Log.e( TAG, "AUTOFOCUS FAILED!");
+                    	camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+		    }
                 }
                 else {
                     //Phone does not support autofocus! Just take the picture
