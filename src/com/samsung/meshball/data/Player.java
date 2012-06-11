@@ -20,11 +20,18 @@ public class Player
     private boolean playing = true;
     private boolean me = false;
 
+    public Player () {}
+    
     public Player(String playerID)
     {
-        this.playerID = playerID;
+    	setPlayerID(playerID);
     }
 
+    public void setPlayerID(String playerID)
+    {
+    	this.playerID = playerID;
+    }
+    
     public String getPlayerID()
     {
         return playerID;
