@@ -38,7 +38,8 @@ public class MeshballApplication extends Application
     public static final String PROFILE_FILENAME = "meshball_profile.png";
 
     public static final String CHANNEL = "com.samsung.meshball";
-    public static final String IDENTITY_TYPE = "com.samsung.meshball/identity";
+    public static final String REQUEST_IDENTITY_TYPE = "com.samsung.meshball/request_identity";
+    public static final String IDENTITY_TYPE_RES = "com.samsung.meshball/identity";
     public static final String CONFIRMED_HIT_TYPE = "com.samsung.meshball/confirmed_hit";
 
     public static final String REFRESH = "com.samsung.meshball/refresh";
@@ -214,8 +215,12 @@ public class MeshballApplication extends Application
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             Toast.makeText( getApplicationContext(), "onJoin(" + fromNode + " on " + fromChannel + ")", Toast.LENGTH_SHORT ).show();
             if ( fromChannel.equals( CHANNEL ) ) {
-                // A join event will trigger a broadcast/shout out
-                broadcastIdentity();
+            	// We create a new player with empty PlayerId but valid NodeId
+            	Player newPlayer = new Player();
+            	newPlayer.setNodeID(fromNode);
+            	nodeMap.put(fromNode, newPlayer);
+                // A join event will trigger an Identity request
+                requestIdentity(fromNode);
             }
         }
 
@@ -234,20 +239,24 @@ public class MeshballApplication extends Application
                     meshballActivity.updateHUD();
                     return;
                 }
-
-                // Remove them from the game...
-                Log.i( TAG, "Removing player %s from game...", player );
-
-                playersMap.remove( player.getPlayerID() );
-                players.remove( player );
-
-                // Also from the confirm list...
-                Iterator<Candidate> it = confirmList.iterator();
-                while( it.hasNext() ) {
-                    Candidate candidate = it.next();
-                    if ( candidate.getPlayerID().equals( player.getPlayerID() ) ) {
-                        it.remove();
-                    }
+                
+                if (player.getPlayerID() != null) {
+	                // Remove them from the game...
+	                Log.i( TAG, "Removing player %s from game...", player );
+	
+	                playersMap.remove( player.getPlayerID() );
+	                players.remove( player );
+	
+	                // Also from the confirm list...
+	                Iterator<Candidate> it = confirmList.iterator();
+	                while( it.hasNext() ) {
+	                    Candidate candidate = it.next();
+	                    if ( candidate.getPlayerID().equals( player.getPlayerID() ) ) {
+	                        it.remove();
+	                    }
+	                }
+	                // We set a player Id as null so we retry on second attempt
+	                player.setPlayerID(null);
                 }
 
                 // Broadcast a refresh in case any activity is interested
@@ -266,7 +275,10 @@ public class MeshballApplication extends Application
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
             if ( fromChannel.equals( CHANNEL ) ) {
-                if ( IDENTITY_TYPE.equals( type ) && (payload.size() == 3) ) {
+            	if ( REQUEST_IDENTITY_TYPE.equals( type ) ) {
+            		handleRequestIdentity(fromNode);
+            	} 
+            	else if ( IDENTITY_TYPE_RES.equals( type ) && (payload.size() == 3) ) {
                     handleIdentity(fromNode, payload);
                 }
                 else if ( CONFIRMED_HIT_TYPE.equals( type ) && (payload.size() == 3) ) {
@@ -405,7 +417,37 @@ public class MeshballApplication extends Application
         timer.schedule(timerTask, new Date(System.currentTimeMillis()), 250);
     }
 
-    @Override
+    protected void requestIdentity(final String fromNode) {
+
+        Log.mark(TAG);
+
+        if ( ! inGame ) {
+            Log.i( TAG, "Not yet in the game - nothing to request." );
+            return;
+        }
+
+        if ( screenName == null ) {
+            Log.i( TAG, "Identity has not been set up yet - nothing to request." );
+            return;
+        }
+
+        Log.d( TAG, "Requesting identity: %s", screenName );
+        magnet.sendData(fromNode, CHANNEL, REQUEST_IDENTITY_TYPE, null, null);
+        
+        // Schedule it again...
+        handler.postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(getPlayerByNodeID(fromNode) == null || getPlayerByNodeID(fromNode).getPlayerID() == null) {
+                    requestIdentity(fromNode);
+                }
+            }
+        }, 1000);
+	}
+
+	@Override
     public void onTerminate()
     {
         Log.i(TAG, "Cancelling timer tasks...");
@@ -726,7 +768,7 @@ public class MeshballApplication extends Application
         broadcastRetry++;
 
         Log.d( TAG, "Broadcasting my identity: %s", screenName );
-        magnet.sendData(null, CHANNEL, IDENTITY_TYPE, payload, new MagnetAgent.MagnetListener()
+        magnet.sendData(null, CHANNEL, IDENTITY_TYPE_RES, payload, new MagnetAgent.MagnetListener()
         {
             @Override
             public void onFailure(int reason)
@@ -887,6 +929,34 @@ public class MeshballApplication extends Application
         }
     }
 
+    private void handleRequestIdentity(String fromNode) {
+    	Log.mark(TAG);
+
+        if ( ! inGame ) {
+            Log.i( TAG, "Not yet in the game - nothing to broadcast." );
+            return;
+        }
+
+        if ( screenName == null ) {
+            Log.i( TAG, "Identity has not been set up yet - nothing to broadcast." );
+            return;
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        Bitmap image = getProfileImage();
+        image.compress(Bitmap.CompressFormat.PNG, 0, bos);
+
+        List<byte[]> payload = new ArrayList<byte[]>();
+
+        payload.add( getPlayerID().getBytes() );
+        payload.add( screenName.getBytes() );
+        payload.add( bos.toByteArray() );
+
+        Log.d( TAG, "Responding with my identity: %s", screenName );
+        magnet.sendData(fromNode, CHANNEL, IDENTITY_TYPE_RES, payload, null);
+    }
+    
     private void handleIdentity(String fromNode, List<byte[]> payload)
     {
         String playerID = new String( payload.get(0) );
@@ -900,20 +970,26 @@ public class MeshballApplication extends Application
         //
         // See getPlayerID()/setPlayerID().
 
-        Player player = playersMap.get( playerID );
-        if ( player == null ) {
-            player = new Player( playerID );
-            addPlayer( player );
+    	Player player = getPlayerByNodeID(fromNode);
+    	
+    	// We don't have the Player on the nodeMap
+    	if (player == null) {
+    		player = new Player();
+    		player.setNodeID(fromNode);
+    	}
+    	    	
+        player.setPlayerID(playerID);
 
-            if ( meshballActivity != null ) {
-                meshballActivity.showMessage(getString(R.string.has_joined, name));
-            }
+        addPlayer( player );
 
-            // Broadcast a refresh in case any activity is interested
-            Intent intent = new Intent( MeshballApplication.REFRESH );
-            intent.putExtra("player_id", player.getPlayerID());
-            sendBroadcast( intent );
+        if ( meshballActivity != null ) {
+            meshballActivity.showMessage(getString(R.string.has_joined, name));
         }
+
+        // Broadcast a refresh in case any activity is interested
+        Intent intent = new Intent( MeshballApplication.REFRESH );
+        intent.putExtra("player_id", player.getPlayerID());
+        sendBroadcast( intent );
 
         player.setScreenName(name);
 
@@ -922,15 +998,6 @@ public class MeshballApplication extends Application
         byte[] bytes = payload.get(2);
         player.setPicture(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
 
-        // Let's still make a mapping with the node ID
-
-        nodeMap.put( fromNode, player );
-
-        // TODO: DEBUGGING!!!  Not 100% the fromNode doesnt change on us...
-        if ( (player.getNodeID() != null) && ! player.getNodeID().equals(fromNode) ) {
-            Log.e( TAG, "ERROR: Got a different fromNode for Player ID %s.  Expected %s but got %s", playerID, player.getNodeID(), fromNode);
-        }
-        player.setNodeID(fromNode);
     }
 
     public void joinGame()
