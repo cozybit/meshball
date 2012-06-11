@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
-import android.widget.Toast;
 import com.samsung.magnet.wrapper.MagnetAgent;
 import com.samsung.magnet.wrapper.MagnetAgentImpl;
 import com.samsung.meshball.data.Candidate;
@@ -213,7 +212,6 @@ public class MeshballApplication extends Application
         public void onJoinEvent(String fromNode, String fromChannel)
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
-            Toast.makeText( getApplicationContext(), "onJoin(" + fromNode + " on " + fromChannel + ")", Toast.LENGTH_SHORT ).show();
             if ( fromChannel.equals( CHANNEL ) ) {
             	// We create a new player with empty PlayerId but valid NodeId
             	Player newPlayer = new Player();
@@ -228,7 +226,6 @@ public class MeshballApplication extends Application
         public void onLeaveEvent(String fromNode, String fromChannel)
         {
             Log.i( TAG, "fromNode = %s, fromChannel = %s", fromNode, fromChannel );
-            Toast.makeText( getApplicationContext(), "onLeave(" + fromNode + " on " + fromChannel + ")", Toast.LENGTH_SHORT ).show();
 
             if ( fromChannel.equals( CHANNEL ) ) {
                 Player player = nodeMap.get( fromNode );
