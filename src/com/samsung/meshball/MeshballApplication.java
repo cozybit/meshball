@@ -426,7 +426,8 @@ public class MeshballApplication extends Application
             @Override
             public void run()
             {
-                if(getPlayerByNodeID(fromNode) == null || getPlayerByNodeID(fromNode).getPlayerID() == null) {
+                // The player is on the channel but we don't have his identity
+                if(getPlayerByNodeID(fromNode) != null && getPlayerByNodeID(fromNode).getPlayerID() == null) {
                     requestIdentity(fromNode);
                 }
             }
