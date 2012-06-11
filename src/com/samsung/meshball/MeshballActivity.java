@@ -34,6 +34,9 @@ public class MeshballActivity extends Activity
     private static final int MAX_FRAME_WIDTH = 600;
     private static final int MAX_FRAME_HEIGHT = 400;
 
+    // Turn to true to add debugging functionalities to app
+	private static final boolean DBG = false;
+
     private CameraConfigurationManager configManager;
     private CameraPreview cameraPreview;
     private FrameLayout preview;
@@ -446,10 +449,13 @@ public class MeshballActivity extends Activity
 
         menu.add(Menu.NONE, R.id.menu_leave, 4, R.string.menu_leave)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-
-        menu.add(Menu.NONE, R.id.menu_extra, 4, R.string.menu_extra)
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-
+        if (DBG) {
+	        menu.add(Menu.NONE, R.id.menu_extra, 5, R.string.menu_extra)
+	                .setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+	        
+	        menu.add(Menu.NONE, R.id.menu_broadcast, 6, R.string.menu_broadcast)
+	        		.setShowAsAction(MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+        }
         return true;
     }
 
@@ -492,7 +498,10 @@ public class MeshballActivity extends Activity
                 intent = new Intent(this, ChannelUsers.class);
                 startActivity(intent);
                 return true;
-
+                
+            case R.id.menu_broadcast:
+            	app.broadcastIdentity();
+            	return true;
 
             default:
                 return super.onOptionsItemSelected(item);
