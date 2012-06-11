@@ -530,14 +530,24 @@ public class MeshballActivity extends Activity
                     try {
 			camera.autoFocus( autoFocusCallback );
 		    } catch (RuntimeException e) {
-			Log.e( TAG, "AUTOFOCUS FAILED!");
-                    	camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+		    	Log.e( TAG, "AUTOFOCUS FAILED!");
+		    	
+		    	// This is very ugly, but camera is not working as expected raising RuntimeException
+		    	try {
+		    		camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+		    	} catch (RuntimeException e2) {
+		    		Log.e( TAG, "TAKING A PICTURE FAILED!");
+		    	}
 		    }
                 }
                 else {
                     //Phone does not support autofocus! Just take the picture
                     Log.d( TAG, "PHONE DOES NOT SUPPORT AUTOFOCUS" );
-                    camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+    		    	try {
+    		    		camera.takePicture( shutterCallback, rawPictureCallback, jpegPictureCallback );
+    		    	} catch (RuntimeException e) {
+    		    		Log.e( TAG, "TAKING A PICTURE FAILED!");
+    		    	}
                 }
             }
         }
