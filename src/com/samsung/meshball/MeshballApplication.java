@@ -61,9 +61,6 @@ public class MeshballApplication extends Application
     private String playerID = null;
     private int score = 0;
 
-    private int broadcastRetry = 0;
-    private long broadcastExpiry;
-
     private long inactivityTimer = 0;
 
     private List<Candidate> reviewList = new ArrayList<Candidate>();
@@ -103,12 +100,6 @@ public class MeshballApplication extends Application
                     meshballActivity.finish();
                 }
                 inactivityTimer = 0;
-            }
-
-            // Test out any broadcast retries...
-            if ( (broadcastExpiry > 0) && ((broadcastExpiry - System.currentTimeMillis()) <= 0) ) {
-                broadcastExpiry = 0;
-                broadcastRetry = 0;
             }
 
             // Handle any stuff to review...
@@ -759,8 +750,6 @@ public class MeshballApplication extends Application
         payload.add( getPlayerID().getBytes() );
         payload.add( screenName.getBytes() );
         payload.add( bos.toByteArray() );
-
-        broadcastRetry++;
 
         Log.d( TAG, "Broadcasting my identity: %s", screenName );
         magnet.sendData(null, CHANNEL, IDENTITY_TYPE_RES, payload, new MagnetAgent.MagnetListener()
