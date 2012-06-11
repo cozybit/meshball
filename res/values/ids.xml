@@ -8,6 +8,7 @@
     <item type="id" name="menu_leave" />
     <item type="id" name="menu_refresh" />
     <item type="id" name="menu_extra" />
+    <item type="id" name="menu_broadcast" />
 
     <item type="id" name="auto_focus"/>
     <item type="id" name="quit"/>

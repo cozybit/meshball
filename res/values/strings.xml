@@ -128,6 +128,7 @@
     <string name="menu_leave">Leave</string>
     <string name="menu_rejoin">Join</string>
     <string name="menu_extra">ChannelUsers</string>
+    <string name="menu_broadcast">Broadcast</string>
 
     <string name="progress_auto_cropping">Detecting face...</string>
 
