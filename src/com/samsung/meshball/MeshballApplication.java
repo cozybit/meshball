@@ -47,7 +47,6 @@ public class MeshballApplication extends Application
 
     private MeshballActivity meshballActivity;
     private MagnetAgent magnet;
-    private boolean isReady = false;
     private boolean noService = false;
     private boolean noValidSDK = false;
     private boolean reviewing = false;
@@ -165,7 +164,6 @@ public class MeshballApplication extends Application
         public void onServiceTerminated()
         {
             Log.mark( TAG );
-            isReady = false;
         }
 
         @Override
@@ -771,32 +769,16 @@ public class MeshballApplication extends Application
             public void onFailure(int reason)
             {
                 Log.e(TAG, "Failure broadcasting identity. Reason = %d", reason);
-                Toast.makeText( getApplicationContext(), "FAILURE SENDING IDENTITY : " + reason, Toast.LENGTH_SHORT ).show();
-
-                // Schedule it again...
-                handler.postDelayed(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        if(broadcastRetry < 5) {
-                            broadcastIdentity();
-                        }
-                        broadcastExpiry = System.currentTimeMillis() + 2000;
-                    }
-                }, 1000);
             }
         });
     }
 
     private void handleWifiConnect()
     {
-        isReady = true;
     }
 
     private void handleWifiDisconnect()
     {
-        isReady = false;
     }
 
     private void handleFile(final String originalName, final String tmp_path, final String shooterID, final String playerID)
