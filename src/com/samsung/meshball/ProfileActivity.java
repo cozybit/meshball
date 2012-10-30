@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.*;
+import android.media.ExifInterface;
 import android.media.FaceDetector;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -144,7 +145,7 @@ public class ProfileActivity
 
             // First, crop the area around the face...
 
-            final Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
+            Bitmap faceBitmap = Bitmap.createBitmap( 300, 300, Bitmap.Config.ARGB_8888 );
             Canvas canvas = new Canvas( faceBitmap );
             Paint paint = new Paint();
 
@@ -187,6 +188,35 @@ public class ProfileActivity
 
             RectF dest = new RectF( 0, 0, 300, 300 );
             canvas.drawBitmap( rawImage, src, dest, paint );
+
+            ExifInterface exif = new ExifInterface(tmpImageFile.getAbsolutePath());
+            int orientation = Integer.parseInt(exif.getAttribute(ExifInterface.TAG_ORIENTATION));
+            Log.d(TAG, "Picture orientation is: " + orientation);
+
+            //if the orientation of the original pic is not portrait,
+            //then rotate the cropped picture
+            if( orientation != ExifInterface.ORIENTATION_UNDEFINED ||
+                    orientation != ExifInterface.ORIENTATION_NORMAL ) {
+                int degrees = 0;
+                switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    degrees = 90;
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    degrees = 180;
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    degrees = 270;
+                    break;
+                }
+
+                Matrix matrix = new Matrix();
+                matrix.postRotate(degrees);
+                faceBitmap = Bitmap.createBitmap(faceBitmap, 0, 0,
+                    faceBitmap.getWidth(), faceBitmap.getHeight(), matrix, true);
+            }
 
             return faceBitmap;
         }
