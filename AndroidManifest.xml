@@ -35,6 +35,7 @@
         <activity android:name=".PreferencesActivity"
                   android:screenOrientation="portrait"/>
         <activity android:name=".ProfileActivity"
+                  android:configChanges="orientation|screenSize"
                   android:screenOrientation="portrait"/>
         <activity android:name=".ImagePickerActivity"
                   android:screenOrientation="portrait"/>
@@ -49,6 +50,5 @@
         <activity android:name=".GameOverActivity"
                   android:screenOrientation="portrait"/>
         <activity android:name=".ChannelUsers"/>
-
     </application>
 </manifest>
