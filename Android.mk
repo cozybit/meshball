@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := debug
 
-LOCAL_PACKAGE_NAME := Meshball
+LOCAL_PACKAGE_NAME := meshball
 
 LOCAL_CERTIFICATE := platform
 
