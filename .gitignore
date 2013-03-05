@@ -6,4 +6,5 @@
 *.iws
 *.iml
 .DS_Store
+.classpath
 local.properties
