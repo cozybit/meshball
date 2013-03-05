@@ -36,6 +36,7 @@ public class MeshballApplication extends Application
 
     public static final String PROFILE_FILENAME = "meshball_profile.png";
 
+    public static final String MAGNET_SERVICE_ACTION = "com.samsung.magnet.service.MESHBALL";
     public static final String CHANNEL = "com.samsung.meshball";
     public static final String REQUEST_IDENTITY_TYPE = "com.samsung.meshball/request_identity";
     public static final String IDENTITY_TYPE_RES = "com.samsung.meshball/identity";
@@ -1058,7 +1059,7 @@ public class MeshballApplication extends Application
             Log.d( TAG, "Magnet is NOT running, creating a new instance..." );
 
             magnet = new MagnetAgentImpl();
-            magnet.initService(getApplicationContext(), serviceListener);
+            magnet.initServiceWithCustomAction(MAGNET_SERVICE_ACTION, getApplicationContext(), serviceListener);
             magnet.registerPublicChannelListener(channelListener);
 
             return true;
