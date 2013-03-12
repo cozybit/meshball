@@ -420,19 +420,6 @@ public class MeshballApplication extends Application
 
         Log.d( TAG, "Requesting identity: %s", screenName );
         magnet.sendData(fromNode, CHANNEL, REQUEST_IDENTITY_TYPE, null, null);
-        
-        // Schedule it again...
-        handler.postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // The player is on the channel but we don't have his identity
-                if(getPlayerByNodeID(fromNode) != null && getPlayerByNodeID(fromNode).getPlayerID() == null) {
-                    requestIdentity(fromNode);
-                }
-            }
-        }, 1000);
 	}
 
 	@Override
