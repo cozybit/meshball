@@ -30,6 +30,6 @@ LOCAL_SRC_FILES := $(call all-subdir-java-files, src)
 
 include $(BUILD_PACKAGE)
 
-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := magnet-standalone:libs/magnet-2.0.21.jar
+LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := magnet-standalone:libs/magnet-2.0.23.jar
 
 include $(BUILD_MULTI_PREBUILT)
