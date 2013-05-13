@@ -13,11 +13,10 @@
 #  - Version name is mandatory. Its format has to be: <major>.<minor>.<point> 
 #  - Repositories will be tagged with the provided version name.
 
-
 # perform a command quietly unless debugging is enabled.i
 # usage: Q <anything>
 function Q () {
-        if [ "${DEBUG}" == "1" ]; then
+        if [ "${VERBOSE}" == "1" ]; then
                 $*
         else
                 $* &> /dev/null
@@ -81,6 +80,7 @@ function compareVersions () {
 # evaluate tools, requirements and script parameters
 # usage: checkParams
 function checkParams () {
+	echo "Checking script parameters, available tools, etc ..."
 	# check tools first
 	[ -z "`which xmllint`" ] && die "ERROR: xmllint utility is not available. Please, install it."
 	[ -z "`which ant-b`" ] && die "ERROR: ant-b utility is not available. Please, check the README for more instructions."
@@ -94,6 +94,7 @@ function checkParams () {
 }
 
 function validateRepo () {
+	echo "Validating repository..."
 	# check for required files
 	[ -e AndroidManifest.xml ] || die "ERROR: AndroidManifest.xml does not exist. Is this an android project?"
 	[ -e build.xml ] || die "ERROR: build.xml file does not exist. Without this file, the project can not be built."
@@ -129,6 +130,7 @@ function increaseVersionCode () {
 # updates the versionName attribute in the AndroidManifess
 # usage: updateVersionName <versionName>
 function updateVersionName () {
+	echo "Updating version name to ${1}"
 	_VNAME=${1}
 	_INIT_VNAME=`extractAttributeXML AndroidManifest.xml /manifest android:versionName`
 	# update name version in the android manifest
@@ -137,25 +139,33 @@ function updateVersionName () {
 	return 0
 }
 
+# increases the provided version number by +1
+# usage: increaseVersionName <versionName>
+function increaseVersionName () {
+        _VN=${1}
+        echo ${_VN} | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}'
+}
+
 # creates a tar bundle with all the necessary files a copies it over
 # usage: createReleaseBundle
 function createReleaseBundle () {
+	echo "Creating release bundle..."
 	_RELEASE=${PNAME}-release-${VNAME}
 	mkdir ${_RELEASE}
 	cp bin/${PNAME}-release.apk ${_RELEASE}/${PNAME}-release-${VNAME}.apk
 
 	# dump info into a file
-	HEAD_SHA=`git log --oneline | head -n1 | cut -d" " -f1`
-	DATE=`date +"%m-%d-%y_%H:%M"`
-	MD5SUM=`md5sum ${_RELEASE}/${PNAME}-release-${VNAME}.apk | cut -d" " -f1`
+	_TAG_SHA=`git show ${VNAME} | head -n1 | awk '{print $2}'`
+	_DATE=`date +"%m-%d-%y_%H:%M"`
+	_MD5SUM=`md5sum ${_RELEASE}/${PNAME}-release-${VNAME}.apk | cut -d" " -f1`
 	echo "$(cat <<EOF
 RELEASE INFO
 ------------
-COMMIT ID: ${HEAD_SHA}
+COMMIT ID: ${_TAG_SHA:0:7}
 TAG/VERSION NAME: ${VNAME}
-DATE: ${DATE}
+DATE: ${_DATE}
 BY: ${USER}@${HOSTNAME}
-MD5SUM: ${MD5SUM}
+APK MD5SUM: ${_MD5SUM}
 EOF
 )" > ${_RELEASE}/RELEASE_INFO
 
@@ -168,7 +178,7 @@ EOF
 ## END OF FUNCTIONS ##
 
 # enable debug is specified
-[ "${DEBUG}" == "1" ] && set -x
+[ -n "${DEBUG}" ] && set -x
 
 Q pushd `dirname $0`
 SCRIPT_DIR=`pwd -P`
@@ -176,15 +186,23 @@ Q popd
 INIT_PATH=${PWD}
 
 # parse the incoming parameters
-usage="$0 [ -b <branch> ] [ -r <repo_url> ] [ -v <vernion_name > ] [-h ]"
-while getopts "b:hr:v:" options; do
+usage="$0 [ -b <branch> ] [ -r <repo_url> ] [ -n <vernion_name> ] [ -v ] [-h ]"
+while getopts "b:hr:n:v" options; do
     case $options in
         b ) BRANCH=${OPTARG};;
 	r ) GIT_REPO=${OPTARG};;
-	v ) VNAME=${OPTARG};;
-        h ) echo ${usage}
+	n ) VNAME=${OPTARG};;
+	v ) VERBOSE="1";;
+        h ) echo "-b	name of the branch to tag."
+	    echo "      If no branch specified, it will use \"master\""
+	    echo "-r    url of the git repo to release."
+	    echo "      If no url speicified, it will try to get the url of the current repo."
+	    echo "-n    version name to put in the AndroidManifest.xml"
+            echo "-h    print this message."
+	    echo ${usage}
+	    echo ""
 	    echo "For more info, checkout the comments available in this script"
-            exit 1;;
+            exit 0;;
         * ) echo unkown option: ${option}
             echo ${usage}
             exit 1;;
@@ -205,7 +223,8 @@ Q pushd ${RELEASE_DIR}
 validateRepo
 
 # checkout the right branch
-git checkout origin/${BRANCH} -b release-${VNAME}
+echo "Creating local branch release-${VNAME} based on origin/${BRANCH}..."
+Q git checkout origin/${BRANCH} -b release-${VNAME}
 
 # Bumping code and name version
 increaseVersionCode || die "ERROR: versionCode can't be updated."
@@ -217,18 +236,20 @@ git commit -a -m "Bumping version code and name for release: release-${VNAME}" |
 
 # Tag
 echo "Tagging release (tag: ${VNAME})..."
-git tag ${VNAME}
+Q git tag ${VNAME}
 
 # Build project
 echo "Building release..."
 ant-b release > build.log || die "ERROR: the project does not build. Check ${PWD}/build.log file for more info."
 
-# Set normal version name
-updateVersionName ${VNAME} || die "ERROR: versionName couldn't be updated."
-git commit -a -m "Set normal version name : ${VNAME}" || \
+# increase version name, because development will continue from now on
+VNAME_PLUS=`increaseVersionName ${VNAME}`
+updateVersionName ${VNAME_PLUS} || die "ERROR: versionName couldn't be updated."
+git commit -a -m "Increase version name to allow dev : ${VNAME_PLUS}" || \
 	die "ERROR: unable to commit release message."
 
 # push tags and commits
+echo "Pushing tags and code and version bumps."
 git push origin release-${VNAME}:${BRANCH} || die "ERROR: code and name version bump couldn't be pushed. Aborting release."
 git push origin ${VNAME} || die "ERROR: the TAG ${VNAME} couldn't be pushed. Aborting release."
 
