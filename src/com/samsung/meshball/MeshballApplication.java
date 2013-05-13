@@ -194,6 +194,12 @@ public class MeshballApplication extends Application
         {
             Log.mark(TAG);
         }
+
+		@Override
+		public void onClosestPeerUpdated(String arg0) 
+		{
+			Log.mark( TAG );
+		}
     };
 
     private MagnetAgent.ChannelListener channelListener = new MagnetAgent.ChannelListener()
